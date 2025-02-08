@@ -1,0 +1,150 @@
+# Set model parameters 
+beta0 = 0:4 ## intercept for Yj|Xj,Z
+beta1 = seq(0.5, 2.5, by = 0.5) ## slope on Xj for Yj|Xj,Z
+beta2 = seq(0.1, 0.5, by = 0.1) ## slope on Z for Yj|Xj,Z
+
+# Function to simulate data 
+sim_data = function(N = 1000, n = 100, cov_X = diag(x = 1, nrow = 5), cov_U = diag(x = 1, nrow = 5), phII = "SRS") {
+  ## Simulate error-free binary covariate Z
+  Z = rbinom(n = N, 
+             size = 1,
+             prob = 0.3) 
+  ## Simulate error-free continuous covariates Xj|Z
+  X_Z0 = mvrnorm(n = N, 
+                 mu = rep(0, 5), ## mean vector
+                 Sigma = cov_X) ## variance-covariance matrix
+  X_Z1 = mvrnorm(n = N, 
+                 mu = rep(1, 5), ## mean vector
+                 Sigma = cov_X) ## variance-covariance matrix
+  X = X_Z0
+  X[which(Z == 1), ] = X_Z1[which(Z == 1), ]
+  colnames(X) = paste0("X", 1:5)
+  ## Simulate error-prone continuous covariates Xj*|Xj
+  ### Random errors 
+  U = mvrnorm(n = N, 
+              mu = rep(0, 5), ## mean vector
+              Sigma = cov_U) ## variance-covariance matrix
+  ### Added to create error-prone covariates 
+  Xstar = X + U 
+  colnames(Xstar) = paste0("Xstar", 1:5)
+  ## Simulate random errors for outcomes
+  eps = mvrnorm(n = N, 
+                mu = rep(0, 5), ## error mean
+                Sigma = diag(x = 1, nrow = 5) ## error variance
+  )
+  ## Simulate continuous outcomes for each continuous covariate Yj|Xj,Z
+  Y = matrix(data = beta0, nrow = N, ncol = 5, byrow = TRUE) + 
+    matrix(data = beta1, nrow = N, ncol = 5, byrow = TRUE) * data.matrix(X) + 
+    matrix(data = beta2, nrow = N, ncol = 5, byrow = TRUE) * matrix(Z, nrow = N, ncol = 5, byrow = FALSE) + 
+    eps
+  colnames(Y) = paste0("Y", 1:5)
+  ## Simulate validation indicator V
+  if (phII == "SRS") {
+    V = as.numeric(1:N <= n)
+    ## Put data together
+    dat = data.frame(Y, X, Z, Xstar, V)
+  } else if (phII == "ETS_PCA") {
+    pc = princomp(X, cor = TRUE)
+    pc1 = data.frame(row_num = 1:N, 
+                     pc = pc$scores[, 1]) ## extract the first principal component
+    
+    ## Order ascendingly by first principal component
+    pc1 = pc1[order(pc1$pc, decreasing = FALSE), ]
+    ### Only validate smallest n/2 principal components
+    smallest_pc1 = pc1$row_num[1:(n / 2)]
+    
+    ## Re-order descendingly by first principal component
+    pc1 = pc1[order(pc1$pc, decreasing = TRUE), ]
+    ### Only validate smallest n/2 residuals
+    largest_pc1 = pc1$row_num[1:(n / 2)]
+    
+    ## Define validation indicator
+    V = as.numeric(1:N %in% c(smallest_pc1, largest_pc1))
+    
+    ## Re-order by row number to merge into data
+    pc1 = pc1[order(pc1$row_num, decreasing = FALSE), ]
+    
+    ## Put data together
+    dat = data.frame(Y, X, Z, Xstar, V, pc1)
+  } else if (phII == "ETS_X1") {
+    justXstar1 = data.frame(row_num = 1:N, 
+                            Xstar1 = Xstar[, 1]) 
+    
+    ## Order ascendingly by X*1
+    justXstar1 = justXstar1[order(justXstar1$Xstar1, decreasing = FALSE), ]
+    ### Only validate smallest n/2 X*1
+    smallest_Xstar1 = justXstar1$row_num[1:(n / 2)]
+    
+    ## Re-order descendingly by first principal component
+    justXstar1 = justXstar1[order(justXstar1$Xstar1, decreasing = TRUE), ]
+    ### Only validate smallest n/2 residuals
+    largest_Xstar1 = justXstar1$row_num[1:(n / 2)]
+    
+    ## Define validation indicator
+    V = as.numeric(1:N %in% c(smallest_Xstar1, largest_Xstar1))
+    
+    ## Put data together
+    dat = data.frame(Y, X, Z, Xstar, V)
+  }
+  ## make X variables missing if V = 0 (unvalidated)
+  dat[which(dat$V == 0), paste0("X", 1:5)] = NA 
+  ## Return
+  return(dat)
+}
+
+# Function to simulate data and then fit single imputation model
+sim_data_fit = function(sim_id, N = 1000, n = 100, cov_X = diag(x = 1, nrow = 5), cov_U = diag(x = 1, nrow = 5), phII = "SRS", m = 1) {
+  ## Simulate data 
+  dat = sim_data(N = N, 
+                 n = n, 
+                 cov_X = cov_X, 
+                 cov_U = cov_U, 
+                 phII = phII) 
+  ## Initialize dataframe to hold estimates from the 5 models
+  fits = data.frame(id = sim_id, 
+                    Model = paste0("X", 1:5), 
+                    est_beta0 = NA, 
+                    est_beta1 = NA, 
+                    est_beta2 = NA)
+  ## Loop over j = 1, ..., 5 to impute and fit each model
+  for (j in 1:5) {
+    ### Imputation model depends on the validation study design and number of imputations
+    dat$Ximp = dat[, paste0("X", j)] #### Initialize with Xj 
+    
+    ### Which variables go into the imputation model 
+    imp_mod_vars = c(paste0("X", j), paste0("Xstar", j), "Z") #### All include Xj, Xj*, Z
+    if (phII == "ETS_PCA") imp_mod_vars = c(imp_mod_vars, "pc") #### ETS-PCA adds pc 
+    if (phII == "ETS_X1") imp_mod_vars = unique(c(imp_mod_vars, "Xstar1")) #### ETS-X1 adds X1* 
+    if (m > 1) imp_mod_vars = c(imp_mod_vars, paste0("Y", j)) #### Multiple imputation adds Yj
+    
+    ### Impute and fit model 
+    if (m == 1) { 
+      #### Single imputation
+      mice_dat = mice(m = 1, 
+                      data = dat[, imp_mod_vars], 
+                      method = "norm.predict", 
+                      printFlag = FALSE)
+      #### Replace missing Xj with imputed values  
+      dat$Ximp[is.na(dat[, paste0("X", j)])] = as.vector(unlist(mice_dat$imp[paste0("X", j)]))
+      #### Fit analysis model to the imputed data 
+      after_imp_fit = glm(formula = as.formula(paste0("Y", j, "~", "Ximp+Z")), 
+                          data = dat)
+      #### Save coefficient estimates
+      fits[j, -c(1:2)] = after_imp_fit$coefficients
+    } else { #### Multiple imputation
+      #### Multiple imputation
+      mice_dat = mice(m = m,
+                      data = dat[, imp_mod_vars], 
+                      method = "norm",
+                      printFlag = FALSE)
+      #### Fit analysis model to the imputed data (separately) 
+      after_imp_fit = with(data = mice_dat, 
+                           expr = glm(formula = as.formula(paste0("Y", j, "~", "X", j, "+Z"))))
+      #### Pool the analysis models from each imputation
+      pool_imp_fit = pool(after_imp_fit)[, 3]
+      #### Save coefficient estimates
+      fits[j, -c(1:2)] = pool_imp_fit$estimate
+    }
+  }
+  return(fits)
+}
