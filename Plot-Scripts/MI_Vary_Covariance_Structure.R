@@ -1,4 +1,5 @@
 library(ggplot2)
+parse.labels <- function(x) parse(text = x)
 p = c("https://raw.githubusercontent.com/sarahlotspeich/ETS_PCA/refs/heads/main/Sim-Data/mi_dep_covar_equal_11422.csv", 
       "https://raw.githubusercontent.com/sarahlotspeich/ETS_PCA/refs/heads/main/Sim-Data/mi_dep_covar_unequal_11422.csv", 
       "https://raw.githubusercontent.com/sarahlotspeich/ETS_PCA/refs/heads/main/Sim-Data/mi_indep_covar_11422.csv")
@@ -18,7 +19,8 @@ plot_dat |>
                                           )), 
                 Model = paste0("Y", sub(pattern = "X", replacement = "", x = Model), " ~ ", Model), 
                 Design = factor(x = Design, 
-                                levels = c("SRS", "ETS (X1)", "ETS (PC1)"))) |> 
+                                levels = c("SRS", "ETS (X1)", "ETS (PC1)"), 
+                                labels = c("SRS", latex2exp::TeX("ETS-$X_1^*$"), latex2exp::TeX("ETS-$PC_1^*$")))) |> 
   ggplot(aes(x = Design, 
              y = est_beta1, 
              fill = Design)) + 
@@ -34,7 +36,7 @@ plot_dat |>
   xlab("Validation Study Design") + 
   ylab(latex2exp::TeX("Coefficient Estimate on X", 
                       bold = TRUE)) + 
-  scale_x_discrete(labels = function(x) stringr::str_wrap(x, width = 6)) + 
+  scale_x_discrete(labels = parse.labels) + 
   theme(strip.background = element_rect(fill = "black"), 
         strip.text = element_text(color = "white"), 
         legend.title = element_text(face = "bold"), 
@@ -56,7 +58,8 @@ plot_dat2 = plot_dat |>
                                )), 
                 Model = paste0("Y", sub(pattern = "X", replacement = "", x = Model), " ~ ", Model), 
                 Design = factor(x = Design, 
-                                levels = c("SRS", "ETS (X1)", "ETS (PC1)"))) |> 
+                                levels = c("SRS", "ETS (X1)", "ETS (PC1)"), 
+                                labels = c("SRS", latex2exp::TeX("ETS-$X_1^*$"), latex2exp::TeX("ETS-$PC_1^*$")))) |> 
   dplyr::group_by(Model, Design, Covar) |> 
   dplyr::summarize(Efficiency = 1 / var(est_beta1)) 
 barbell_dat = plot_dat2 |>
@@ -70,15 +73,15 @@ plot_dat2 |>
              color = Design)) + 
   geom_segment(data = barbell_dat,
                aes(x = Model, y = log(minEff),
-                   xend = Model, yend = log(maxEff)), #use the $ operator to fetch data from our "Females" tibble
+                   xend = Model, yend = log(maxEff)),
                color = "#aeb6bf",
-               linewidth = 4.5, #Note that I sized the segment to fit the points
-               alpha = .5) +
+               linewidth = 4.5, 
+               alpha = 0.5) +
   geom_point(size = 4) + 
   facet_grid(cols = vars(Covar), 
              scales = "free") + 
   theme_minimal(base_size = 14) + 
-  ggthemes::scale_color_colorblind() + 
+  ggthemes::scale_color_colorblind(labels = parse.labels) + 
   xlab(latex2exp::TeX("Model of $Y_j \\sim X_j$", 
                       bold = TRUE)) + 
   ylab(latex2exp::TeX("Empirical Efficiency of Coefficient Estimate on $X_j$ (Log-Transformed)", 
