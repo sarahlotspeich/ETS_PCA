@@ -4,7 +4,7 @@ beta1 = seq(0.5, 2.5, by = 0.5) ## slope on Xj for Yj|Xj,Z
 beta2 = seq(0.1, 0.5, by = 0.1) ## slope on Z for Yj|Xj,Z
 
 # Function to simulate data 
-sim_data = function(N = 1000, n = 100, cov_X = diag(x = 1, nrow = 5), cov_U = diag(x = 1, nrow = 5), phII = "SRS") {
+sim_data = function(N = 1000, n = 100, cov_X = diag(x = 1, nrow = 5), cov_U = diag(x = 1, nrow = 5), phII = "SRS", same_Y_type = TRUE, shared_Y = FALSE) {
   ## Simulate error-free binary covariate Z
   Z = rbinom(n = N, 
              size = 1,
@@ -33,11 +33,29 @@ sim_data = function(N = 1000, n = 100, cov_X = diag(x = 1, nrow = 5), cov_U = di
                 Sigma = diag(x = 1, nrow = 5) ## error variance
   )
   ## Simulate continuous outcomes for each continuous covariate Yj|Xj,Z
-  Y = matrix(data = beta0, nrow = N, ncol = 5, byrow = TRUE) + 
-    matrix(data = beta1, nrow = N, ncol = 5, byrow = TRUE) * data.matrix(X) + 
-    matrix(data = beta2, nrow = N, ncol = 5, byrow = TRUE) * matrix(Z, nrow = N, ncol = 5, byrow = FALSE) + 
-    eps
-  colnames(Y) = paste0("Y", 1:5)
+  if (same_Y_type & !shared_Y) {
+    Y = matrix(data = beta0, nrow = N, ncol = 5, byrow = TRUE) + 
+      matrix(data = beta1, nrow = N, ncol = 5, byrow = TRUE) * data.matrix(X) + 
+      matrix(data = beta2, nrow = N, ncol = 5, byrow = TRUE) * matrix(Z, nrow = N, ncol = 5, byrow = FALSE) + 
+      eps
+    colnames(Y) = paste0("Y", 1:5)
+  } else if (shared_Y) {
+    
+  } else if (!same_Y_type) {
+    ## First two are numeric 
+    Y1 = beta0[1] + beta1[1] * data.matrix(X)[, 1] + beta2[1] * Z + eps[, 1] 
+    Y2 = beta0[2] + beta1[2] * data.matrix(X)[, 2] + beta2[2] * Z + eps[, 2] 
+    
+    ## Next two are binary 
+    Y3 = rbinom(n = N, size = 1, prob = 1 / (1 + exp(- (beta0[3] + beta1 * data.matrix(X)[, 3] + beta2[3] * Z))))
+    Y4 = rbinom(n = N, size = 1, prob = 1 / (1 + exp(- (beta0[4] + beta1 * data.matrix(X)[, 4] + beta2[4] * Z))))
+    
+    ## Last one is count
+    Y5 = rpois(n = N, lambda = exp(beta0[5] + beta1 * data.matrix(X)[, 5] + beta2[5] * Z))
+    
+    ## Put them all together 
+    Y = data.matrix(cbind(Y1, Y2, Y3, Y4, Y5))
+  }
   ## Simulate validation indicator V
   if (phII == "SRS") {
     V = as.numeric(1:N <= n)
@@ -93,13 +111,15 @@ sim_data = function(N = 1000, n = 100, cov_X = diag(x = 1, nrow = 5), cov_U = di
 }
 
 # Function to simulate data and then fit single imputation model
-sim_data_fit = function(sim_id, N = 1000, n = 100, cov_X = diag(x = 1, nrow = 5), cov_U = diag(x = 1, nrow = 5), phII = "SRS", m = 1) {
+sim_data_fit = function(sim_id, N = 1000, n = 100, cov_X = diag(x = 1, nrow = 5), cov_U = diag(x = 1, nrow = 5), phII = "SRS", same_Y_type = TRUE, shared_Y = FALSE, m = 1) {
   ## Simulate data 
   dat = sim_data(N = N, 
                  n = n, 
                  cov_X = cov_X, 
                  cov_U = cov_U, 
-                 phII = phII) 
+                 phII = phII, 
+                 same_Y_type = same_Y_type, 
+                 shared_Y = shared_Y) 
   ## Initialize dataframe to hold estimates from the 5 models
   fits = data.frame(id = sim_id, 
                     Model = paste0("X", 1:5), 
@@ -117,6 +137,13 @@ sim_data_fit = function(sim_id, N = 1000, n = 100, cov_X = diag(x = 1, nrow = 5)
     if (phII == "ETS_X1") imp_mod_vars = unique(c(imp_mod_vars, "Xstar1")) #### ETS-X1 adds X1* 
     if (m > 1) imp_mod_vars = c(imp_mod_vars, paste0("Y", j)) #### Multiple imputation adds Yj
     
+    ### Which type of outcome model to fit 
+    family_Yj = "gaussian" 
+    if (!same_Y_type & j > 2) {
+      if (j == 5) family_Yj = "poisson"
+      else family_Yj = "binomial"
+    }
+    
     ### Impute and fit model 
     if (m == 1) { 
       #### Single imputation
@@ -128,7 +155,8 @@ sim_data_fit = function(sim_id, N = 1000, n = 100, cov_X = diag(x = 1, nrow = 5)
       dat$Ximp[is.na(dat[, paste0("X", j)])] = as.vector(unlist(mice_dat$imp[paste0("X", j)]))
       #### Fit analysis model to the imputed data 
       after_imp_fit = glm(formula = as.formula(paste0("Y", j, "~", "Ximp+Z")), 
-                          data = dat)
+                          data = dat, 
+                          family = family_Yj)
       #### Save coefficient estimates
       fits[j, -c(1:2)] = after_imp_fit$coefficients
     } else { #### Multiple imputation
@@ -139,7 +167,8 @@ sim_data_fit = function(sim_id, N = 1000, n = 100, cov_X = diag(x = 1, nrow = 5)
                       printFlag = FALSE)
       #### Fit analysis model to the imputed data (separately) 
       after_imp_fit = with(data = mice_dat, 
-                           expr = glm(formula = as.formula(paste0("Y", j, "~", "X", j, "+Z"))))
+                           expr = glm(formula = as.formula(paste0("Y", j, "~", "X", j, "+Z")), 
+                                      family = family_Yj))
       #### Pool the analysis models from each imputation
       pool_imp_fit = pool(after_imp_fit)[, 3]
       #### Save coefficient estimates
