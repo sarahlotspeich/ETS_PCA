@@ -7,8 +7,8 @@ plot_dat = do.call(dplyr::bind_rows,
                    lapply(X = paste0(p, list.files(p)), 
                           FUN = read.csv))
 
-# Boxplot of coefficient estimates
-plot_dat |> 
+# Define factors
+plot_dat = plot_dat |> 
   dplyr::mutate(Covar = factor(x = Covar, 
                                levels = c("Independent Covariates (Zero Covariance)", 
                                           "Dependent Covariates (Equal Covariance)",
@@ -16,11 +16,21 @@ plot_dat |>
                                labels = c("Independent Covariates\n(Zero Covariance)", 
                                           "Dependent Covariates\n(Equal Covariance)",
                                           "Dependent Covariates\n(Unequal Covariance)"
-                                          )), 
+                               )), 
                 Model = paste0("Y", sub(pattern = "X", replacement = "", x = Model), " ~ ", Model), 
+                Model = factor(x = Model, 
+                               levels = c("Y1 ~ X1", "Y2 ~ X2", "Y3 ~ X3", "Y4 ~ X4", "Y5 ~ X5"), 
+                               labels = c(TeX("$Y_1 \\sim X_1$"), 
+                                          TeX("$Y_2 \\sim X_2$"),
+                                          TeX("$Y_3 \\sim X_3$"), 
+                                          TeX("$Y_4 \\sim X_4$"),
+                                          TeX("$Y_5 \\sim X_5$"))),
                 Design = factor(x = Design, 
                                 levels = c("SRS", "ETS (X1)", "ETS (PC1)"), 
-                                labels = c("SRS", latex2exp::TeX("ETS-$X_1^*$"), latex2exp::TeX("ETS-$PC_1^*$")))) |> 
+                                labels = c("SRS", TeX("ETS-$X_1^*$"), TeX("ETS-$PC_1^*$")))) 
+
+# Boxplot of coefficient estimates
+plot_dat |> 
   ggplot(aes(x = Design, 
              y = est_beta1, 
              fill = Design)) + 
@@ -48,18 +58,6 @@ ggsave(filename = "~/Documents/ETS_PCA/Plots/MI_Vary_Covariance_Structure.pdf",
 
 # Barbell plot of relative efficiency
 plot_dat2 = plot_dat |> 
-  dplyr::mutate(Covar = factor(x = Covar, 
-                               levels = c("Independent Covariates (Zero Covariance)", 
-                                          "Dependent Covariates (Equal Covariance)",
-                                          "Dependent Covariates (Unequal Covariance)"), 
-                               labels = c("Independent Covariates\n(Zero Covariance)", 
-                                          "Dependent Covariates\n(Equal Covariance)",
-                                          "Dependent Covariates\n(Unequal Covariance)"
-                               )), 
-                Model = paste0("Y", sub(pattern = "X", replacement = "", x = Model), " ~ ", Model), 
-                Design = factor(x = Design, 
-                                levels = c("SRS", "ETS (X1)", "ETS (PC1)"), 
-                                labels = c("SRS", latex2exp::TeX("ETS-$X_1^*$"), latex2exp::TeX("ETS-$PC_1^*$")))) |> 
   dplyr::group_by(Model, Design, Covar) |> 
   dplyr::summarize(Efficiency = 1 / var(est_beta1)) 
 barbell_dat = plot_dat2 |>
@@ -86,7 +84,7 @@ plot_dat2 |>
                       bold = TRUE)) + 
   ylab(latex2exp::TeX("Empirical Efficiency of Coefficient Estimate on $X_j$ (Log-Transformed)", 
                       bold = TRUE)) + 
-  scale_x_discrete(labels = function(x) stringr::str_wrap(x, width = 6)) + 
+  scale_x_discrete(labels = parse.labels) + 
   theme(strip.background = element_rect(fill = "black"), 
         strip.text = element_text(color = "white"), 
         legend.title = element_text(face = "bold"), 
