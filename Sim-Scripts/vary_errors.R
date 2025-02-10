@@ -1,6 +1,7 @@
 # Load packages
 library(MASS) ## to simulate multivariate normal data
 library(mice) ## to do imputation
+library(dplyr) ## to do data wrangling
 
 # Source script to simulate data and fit models
 devtools::source_url("https://github.com/sarahlotspeich/ETS_PCA/blob/main/Sim-Scripts/sim_data_fit.R?raw=TRUE")
@@ -48,20 +49,20 @@ for (sigmaU in c(0.1, 0.25, 0.5, 1)) {
                                          cov_U = diag(x = sigmaU, nrow = 5)))
   # Combine and save results
   SRS_results |> 
-    dplyr::mutate(Design = "SRS") |> 
-    dplyr::bind_rows(
+    mutate(Design = "SRS") |> 
+    bind_rows(
       ETS_PCA_results |> 
-        dplyr::mutate(Design = "ETS (PC1)")
+        mutate(Design = "ETS (PC1)")
     ) |> 
-    dplyr::bind_rows(
+    bind_rows(
       ETS_X1_results |> 
-        dplyr::mutate(Design = "ETS (X1)")
+        mutate(Design = "ETS (X1)")
     ) |> 
-    dplyr::mutate(Design = factor(x = Design, 
+    mutate(Design = factor(x = Design, 
                                   levels = c("SRS", "ETS (X1)", "ETS (PC1)")), 
                   Covar = "Dependent Covariates (Equal Covariance)", 
                   ErrorVar = sigmaU ^ 2) |> 
-    dplyr::left_join(data.frame(Model = paste0("X", 1:5), 
+    left_join(data.frame(Model = paste0("X", 1:5), 
                                 Truth = beta1)) |> 
     write.csv(file = paste0("val_errors_", sigmaU * 10, "_", sim_seed, ".csv"), 
               row.names = FALSE)
