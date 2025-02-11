@@ -47,11 +47,11 @@ sim_data = function(N = 1000, n = 100, cov_X = diag(x = 1, nrow = 5), cov_U = di
     Y2 = beta0[2] + beta1[2] * data.matrix(X)[, 2] + beta2[2] * Z + eps[, 2] 
     
     ## Next two are binary 
-    Y3 = rbinom(n = N, size = 1, prob = 1 / (1 + exp(- (beta0[3] + beta1 * data.matrix(X)[, 3] + beta2[3] * Z))))
-    Y4 = rbinom(n = N, size = 1, prob = 1 / (1 + exp(- (beta0[4] + beta1 * data.matrix(X)[, 4] + beta2[4] * Z))))
+    Y3 = rbinom(n = N, size = 1, prob = 1 / (1 + exp(- (beta0[3] + beta1[3] * data.matrix(X)[, 3] + beta2[3] * Z))))
+    Y4 = rbinom(n = N, size = 1, prob = 1 / (1 + exp(- (beta0[4] + beta1[4] * data.matrix(X)[, 4] + beta2[4] * Z))))
     
     ## Last one is count
-    Y5 = rpois(n = N, lambda = exp(beta0[5] + beta1 * data.matrix(X)[, 5] + beta2[5] * Z))
+    Y5 = rpois(n = N, lambda = exp(beta0[5] + beta1[5] * data.matrix(X)[, 5] + beta2[5] * Z))
     
     ## Put them all together 
     Y = data.matrix(cbind(Y1, Y2, Y3, Y4, Y5))
