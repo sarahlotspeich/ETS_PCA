@@ -1,11 +1,13 @@
-library(ggplot2)
-parse.labels <- function(x) parse(text = x)
+# Load data 
 p = c("https://raw.githubusercontent.com/sarahlotspeich/ETS_PCA/refs/heads/main/Sim-Data/mi_dep_covar_equal_11422.csv", 
       "https://raw.githubusercontent.com/sarahlotspeich/ETS_PCA/refs/heads/main/Sim-Data/mi_dep_covar_unequal_11422.csv", 
       "https://raw.githubusercontent.com/sarahlotspeich/ETS_PCA/refs/heads/main/Sim-Data/mi_indep_covar_11422.csv")
 plot_dat = do.call(dplyr::bind_rows, 
                    lapply(X = paste0(p, list.files(p)), 
                           FUN = read.csv))
+
+# Source script with plot-building functions
+devtools::source_url("https://raw.githubusercontent.com/sarahlotspeich/ETS_PCA/refs/heads/main/Plot-Scripts/plot_functions.R")
 
 # Define factors
 plot_dat = plot_dat |> 
@@ -16,81 +18,22 @@ plot_dat = plot_dat |>
                                labels = c("Independent Covariates\n(Zero Covariance)", 
                                           "Dependent Covariates\n(Equal Covariance)",
                                           "Dependent Covariates\n(Unequal Covariance)"
-                               )), 
-                Model = paste0("Y", sub(pattern = "X", replacement = "", x = Model), " ~ ", Model), 
-                Model = factor(x = Model, 
-                               levels = c("Y1 ~ X1", "Y2 ~ X2", "Y3 ~ X3", "Y4 ~ X4", "Y5 ~ X5"), 
-                               labels = c(TeX("$Y_1 \\sim X_1$"), 
-                                          TeX("$Y_2 \\sim X_2$"),
-                                          TeX("$Y_3 \\sim X_3$"), 
-                                          TeX("$Y_4 \\sim X_4$"),
-                                          TeX("$Y_5 \\sim X_5$"))),
-                Design = factor(x = Design, 
-                                levels = c("SRS", "ETS (X1)", "ETS (PC1)"), 
-                                labels = c("SRS", TeX("ETS-$X_1^*$"), TeX("ETS-$PC_1^*$")))) 
+                               ))) 
 
 # Boxplot of coefficient estimates
 plot_dat |> 
-  ggplot(aes(x = Design, 
-             y = est_beta1, 
-             fill = Design)) + 
-  geom_boxplot() + 
-  geom_hline(aes(yintercept = Truth), 
-             linetype = 2, 
-             color = "red") + 
-  facet_grid(cols = vars(Covar), 
-             rows = vars(Model), 
-             scales = "free") + 
-  theme_minimal(base_size = 14) + 
-  ggthemes::scale_fill_colorblind(guide = "none") + 
-  xlab("Validation Study Design") + 
-  ylab(latex2exp::TeX("Coefficient Estimate on X", 
-                      bold = TRUE)) + 
-  scale_x_discrete(labels = parse.labels) + 
-  theme(strip.background = element_rect(fill = "black"), 
-        strip.text = element_text(color = "white"), 
-        legend.title = element_text(face = "bold"), 
-        legend.position = "top")
+  boxplot_estimates(col_facet_var = Covar)
+## Save it 
 ggsave(filename = "~/Documents/ETS_PCA/Plots/MI_Vary_Covariance_Structure.pdf", 
        device = "pdf", 
        width = 8, 
        height = 10)
 
 # Barbell plot of relative efficiency
-plot_dat2 = plot_dat |> 
-  dplyr::group_by(Model, Design, Covar) |> 
-  dplyr::summarize(Efficiency = 1 / var(est_beta1)) 
-barbell_dat = plot_dat2 |>
-  dplyr::group_by(Model, Covar) |> 
-  dplyr::summarize(minEff = min(Efficiency), 
-                   maxEff = max(Efficiency))
-
-plot_dat2 |> 
-  ggplot(aes(x = Model, 
-             y = log(Efficiency), 
-             color = Design)) + 
-  geom_segment(data = barbell_dat,
-               aes(x = Model, y = log(minEff),
-                   xend = Model, yend = log(maxEff)),
-               color = "#aeb6bf",
-               linewidth = 4.5, 
-               alpha = 0.5) +
-  geom_point(size = 4) + 
-  facet_grid(cols = vars(Covar), 
-             scales = "free") + 
-  theme_minimal(base_size = 14) + 
-  ggthemes::scale_color_colorblind(labels = parse.labels) + 
-  xlab(latex2exp::TeX("Model of $Y_j \\sim X_j$", 
-                      bold = TRUE)) + 
-  ylab(latex2exp::TeX("Empirical Efficiency of Coefficient Estimate on $X_j$ (Log-Transformed)", 
-                      bold = TRUE)) + 
-  scale_x_discrete(labels = parse.labels) + 
-  theme(strip.background = element_rect(fill = "black"), 
-        strip.text = element_text(color = "white"), 
-        legend.title = element_text(face = "bold"), 
-        legend.position = "top") + 
-  coord_flip() 
+plot_dat |> 
+  barbell_efficiency(group_by_var = Covar)
+## Save it 
 ggsave(filename = "~/Documents/ETS_PCA/Plots/MI_Vary_Covariance_Structure_Barbell.pdf", 
        device = "pdf", 
-       width = 7, 
+       width = 8, 
        height = 5)
