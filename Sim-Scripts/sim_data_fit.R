@@ -42,16 +42,16 @@ sim_data = function(N = 1000, n = 100, cov_X = diag(x = 1, nrow = 5), cov_U = di
   } else if (shared_Y) {
     
   } else if (!same_Y_type) {
-    ## First two are numeric 
-    Y1 = beta0[1] + beta1[1] * data.matrix(X)[, 1] + beta2[1] * Z + eps[, 1] 
-    Y2 = beta0[2] + beta1[2] * data.matrix(X)[, 2] + beta2[2] * Z + eps[, 2] 
+    ## First two are binary 
+    Y1 = rbinom(n = N, size = 1, prob = 1 / (1 + exp(- (beta0[1] + beta1[1] * data.matrix(X)[, 1] + beta2[1] * Z))))
+    Y2 = rbinom(n = N, size = 1, prob = 1 / (1 + exp(- (beta0[2] + beta1[2] * data.matrix(X)[, 2] + beta2[2] * Z))))
     
-    ## Next two are binary 
-    Y3 = rbinom(n = N, size = 1, prob = 1 / (1 + exp(- (beta0[3] + beta1[3] * data.matrix(X)[, 3] + beta2[3] * Z))))
-    Y4 = rbinom(n = N, size = 1, prob = 1 / (1 + exp(- (beta0[4] + beta1[4] * data.matrix(X)[, 4] + beta2[4] * Z))))
+    ## Next one is count
+    Y3 = rpois(n = N, lambda = exp(beta0[3] + beta1[3] * data.matrix(X)[, 3] + beta2[3] * Z))
     
-    ## Last one is count
-    Y5 = rpois(n = N, lambda = exp(beta0[5] + beta1[5] * data.matrix(X)[, 5] + beta2[5] * Z))
+    ## Last two are numeric 
+    Y4 = beta0[4] + beta1[4] * data.matrix(X)[, 4] + beta2[4] * Z + eps[, 4] 
+    Y5 = beta0[5] + beta1[5] * data.matrix(X)[, 5] + beta2[5] * Z + eps[, 5] 
     
     ## Put them all together 
     Y = data.matrix(cbind(Y1, Y2, Y3, Y4, Y5))
@@ -139,8 +139,8 @@ sim_data_fit = function(sim_id, N = 1000, n = 100, cov_X = diag(x = 1, nrow = 5)
     
     ### Which type of outcome model to fit 
     family_Yj = "gaussian" 
-    if (!same_Y_type & j > 2) {
-      if (j == 5) family_Yj = "poisson"
+    if (!same_Y_type & j < 4) {
+      if (j == 3) family_Yj = "poisson"
       else family_Yj = "binomial"
     }
     
