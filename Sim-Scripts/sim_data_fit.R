@@ -1,6 +1,7 @@
 # Set model parameters 
 beta0 = 0:4 ## intercept for Yj|Xj,Z
 beta1 = seq(0.5, 2.5, by = 0.5) ## slope on Xj for Yj|Xj,Z
+beta1[2] = 0.5 ## force beta1 in Y2 ~ X2 to be same as Y1 ~ X1
 beta2 = seq(0.1, 0.5, by = 0.1) ## slope on Z for Yj|Xj,Z
 
 # Function to simulate data 
@@ -43,11 +44,16 @@ sim_data = function(N = 1000, n = 100, cov_X = diag(x = 1, nrow = 5), cov_U = di
     
   } else if (!same_Y_type) {
     ## First two are binary 
-    Y1 = rbinom(n = N, size = 1, prob = 1 / (1 + exp(- (beta0[1] + beta1[1] * data.matrix(X)[, 1] + beta2[1] * Z))))
-    Y2 = rbinom(n = N, size = 1, prob = 1 / (1 + exp(- (beta0[2] + beta1[2] * data.matrix(X)[, 2] + beta2[2] * Z))))
+    Y1 = rbinom(n = N, 
+                size = 1, 
+                prob = 1 / (1 + exp(- (beta0[1] + beta1[1] * data.matrix(X)[, 1] + beta2[1] * Z))))
+    Y2 = rbinom(n = N, 
+                size = 1, 
+                prob = 1 / (1 + exp(- (beta0[2] + beta1[2] * data.matrix(X)[, 2] + beta2[2] * Z))))
     
     ## Next one is count
-    Y3 = rpois(n = N, lambda = exp(beta0[3] + beta1[3] * data.matrix(X)[, 3] + beta2[3] * Z))
+    Y3 = rpois(n = N, 
+               lambda = exp(beta0[3] + beta1[3] * data.matrix(X)[, 3] + beta2[3] * Z))
     
     ## Last two are numeric 
     Y4 = beta0[4] + beta1[4] * data.matrix(X)[, 4] + beta2[4] * Z + eps[, 4] 
