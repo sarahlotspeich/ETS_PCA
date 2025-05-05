@@ -123,6 +123,7 @@ sim_data_fit = function(sim_id, N = 1000, n = 100, beta1 = seq(0.5, 2.5, by = 0.
   ## Simulate data 
   dat = sim_data(N = N, 
                  n = n, 
+                 beta1 = beta1, 
                  cov_X = cov_X, 
                  cov_U = cov_U, 
                  phII = phII, 
