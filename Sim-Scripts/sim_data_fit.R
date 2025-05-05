@@ -1,11 +1,11 @@
 # Set model parameters 
 beta0 = 0:4 ## intercept for Yj|Xj,Z
-beta1 = seq(0.5, 2.5, by = 0.5) ## slope on Xj for Yj|Xj,Z
+# beta1 = seq(0.5, 2.5, by = 0.5) ## slope on Xj for Yj|Xj,Z
 # beta1[2] = 0.5 ## force beta1 in Y2 ~ X2 to be same as Y1 ~ X1
 beta2 = seq(0.1, 0.5, by = 0.1) ## slope on Z for Yj|Xj,Z
 
 # Function to simulate data 
-sim_data = function(N = 1000, n = 100, cov_X = diag(x = 1, nrow = 5), cov_U = diag(x = 1, nrow = 5), phII = "SRS", same_Y_type = TRUE, shared_Y = FALSE) {
+sim_data = function(N = 1000, n = 100, beta1 = seq(0.5, 2.5, by = 0.5), cov_X = diag(x = 1, nrow = 5), cov_U = diag(x = 1, nrow = 5), phII = "SRS", same_Y_type = TRUE, shared_Y = FALSE) {
   ## Simulate error-free binary covariate Z
   Z = rbinom(n = N, 
              size = 1,
@@ -41,7 +41,7 @@ sim_data = function(N = 1000, n = 100, cov_X = diag(x = 1, nrow = 5), cov_U = di
       eps
     colnames(Y) = paste0("Y", 1:5)
   } else if (shared_Y) {
-    
+    Y = beta0[1] + dim(data.matrix(X) %*% matrix(data = beta1, ncol = 1)) + beta2[1] * Z + eps[, 1]
   } else if (!same_Y_type) {
     ## First two are continuous
     Y1 = beta0[1] + beta1[1] * data.matrix(X)[, 1] + beta2[1] * Z + eps[, 1] 
@@ -117,7 +117,7 @@ sim_data = function(N = 1000, n = 100, cov_X = diag(x = 1, nrow = 5), cov_U = di
 }
 
 # Function to simulate data and then fit single imputation model
-sim_data_fit = function(sim_id, N = 1000, n = 100, cov_X = diag(x = 1, nrow = 5), cov_U = diag(x = 1, nrow = 5), phII = "SRS", same_Y_type = TRUE, shared_Y = FALSE, m = 1) {
+sim_data_fit = function(sim_id, N = 1000, n = 100, beta1 = seq(0.5, 2.5, by = 0.5), cov_X = diag(x = 1, nrow = 5), cov_U = diag(x = 1, nrow = 5), phII = "SRS", same_Y_type = TRUE, shared_Y = FALSE, m = 1) {
   ## Simulate data 
   dat = sim_data(N = N, 
                  n = n, 
