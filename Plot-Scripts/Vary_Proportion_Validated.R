@@ -12,6 +12,7 @@ devtools::source_url("https://raw.githubusercontent.com/sarahlotspeich/ETS_PCA/r
 
 # Define factors
 plot_dat = plot_dat |> 
+  dplyr::filter(ValProp != 0.2) |> 
   dplyr::mutate(ValProp = factor(x = ValProp, 
                                  levels = seq(from = 0.1, to = 0.25, by = 0.05), 
                                  labels = paste0(seq(from = 10, to = 25, by = 5), 
