@@ -1,7 +1,7 @@
 # Set model parameters 
 beta0 = 0:4 ## intercept for Yj|Xj,Z
 beta1 = seq(0.5, 2.5, by = 0.5) ## slope on Xj for Yj|Xj,Z
-beta1[2] = 0.5 ## force beta1 in Y2 ~ X2 to be same as Y1 ~ X1
+# beta1[2] = 0.5 ## force beta1 in Y2 ~ X2 to be same as Y1 ~ X1
 beta2 = seq(0.1, 0.5, by = 0.1) ## slope on Z for Yj|Xj,Z
 
 # Function to simulate data 
@@ -43,21 +43,21 @@ sim_data = function(N = 1000, n = 100, cov_X = diag(x = 1, nrow = 5), cov_U = di
   } else if (shared_Y) {
     
   } else if (!same_Y_type) {
-    ## First two are binary 
-    Y1 = rbinom(n = N, 
-                size = 1, 
-                prob = 1 / (1 + exp(- (beta0[1] + beta1[1] * data.matrix(X)[, 1] + beta2[1] * Z))))
-    Y2 = rbinom(n = N, 
-                size = 1, 
-                prob = 1 / (1 + exp(- (beta0[2] + beta1[2] * data.matrix(X)[, 2] + beta2[2] * Z))))
+    ## First two are continuous
+    Y1 = beta0[1] + beta1[1] * data.matrix(X)[, 1] + beta2[1] * Z + eps[, 1] 
+    Y2 = beta0[2] + beta1[2] * data.matrix(X)[, 2] + beta2[2] * Z + eps[, 2] 
     
     ## Next one is count
     Y3 = rpois(n = N, 
                lambda = exp(beta0[3] + beta1[3] * data.matrix(X)[, 3] + beta2[3] * Z))
     
-    ## Last two are numeric 
-    Y4 = beta0[4] + beta1[4] * data.matrix(X)[, 4] + beta2[4] * Z + eps[, 4] 
-    Y5 = beta0[5] + beta1[5] * data.matrix(X)[, 5] + beta2[5] * Z + eps[, 5] 
+    ## Last two are binary 
+    Y4 = rbinom(n = N, 
+                size = 1, 
+                prob = 1 / (1 + exp(- (beta0[4] + beta1[4] * data.matrix(X)[, 4] + beta2[4] * Z))))
+    Y5 = rbinom(n = N, 
+                size = 1, 
+                prob = 1 / (1 + exp(- (beta0[5] + beta1[5] * data.matrix(X)[, 5] + beta2[5] * Z))))
     
     ## Put them all together 
     Y = data.matrix(cbind(Y1, Y2, Y3, Y4, Y5))
@@ -145,7 +145,7 @@ sim_data_fit = function(sim_id, N = 1000, n = 100, cov_X = diag(x = 1, nrow = 5)
     
     ### Which type of outcome model to fit 
     family_Yj = "gaussian" 
-    if (!same_Y_type & j < 4) {
+    if (!same_Y_type & j > 2) {
       if (j == 3) family_Yj = "poisson"
       else family_Yj = "binomial"
     }
