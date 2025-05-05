@@ -41,7 +41,9 @@ sim_data = function(N = 1000, n = 100, beta1 = seq(0.5, 2.5, by = 0.5), cov_X = 
       eps
     colnames(Y) = paste0("Y", 1:5)
   } else if (shared_Y) {
-    Y = beta0[1] + dim(data.matrix(X) %*% matrix(data = beta1, ncol = 1)) + beta2[1] * Z + eps[, 1]
+    Y = beta0[1] + 
+      data.matrix(X) %*% matrix(data = beta1, ncol = 1) + 
+      beta2[1] * Z + eps[, 1]
   } else if (!same_Y_type) {
     ## First two are continuous
     Y1 = beta0[1] + beta1[1] * data.matrix(X)[, 1] + beta2[1] * Z + eps[, 1] 
