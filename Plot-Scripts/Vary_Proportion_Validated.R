@@ -33,5 +33,5 @@ plot_dat |>
 ## Save it 
 ggsave(filename = "~/Documents/ETS_PCA/Plots/Vary_Proportion_Validated_Barbell.pdf", 
        device = "pdf", 
-       width = 7, 
+       width = 8, 
        height = 5)
