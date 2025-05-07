@@ -21,7 +21,7 @@ plot_dat = plot_dat |>
 
 # Boxplot of coefficient estimates
 plot_dat |> 
-  boxplot_estimates(col_facet_var = beta_sett) + 
+  boxplot_estimates(col_facet_var = beta_sett, sharedY = TRUE) + 
   facet_grid(cols = vars(beta_sett),
              rows = vars(Model), 
              scales = "free", 
@@ -35,12 +35,12 @@ ggsave(filename = "~/Documents/ETS_PCA/Plots/SharedY.pdf",
 
 # Barbell plot of relative efficiency
 plot_dat |> 
-  barbell_efficiency(group_by_var = beta_sett) + 
+  barbell_efficiency(group_by_var = beta_sett, sharedY = TRUE) + 
   facet_grid(cols = vars(beta_sett), 
              scales = "free", 
              labeller = labeller(beta_sett = label_parsed))
 ## Save it 
 ggsave(filename = "~/Documents/ETS_PCA/Plots/SharedY_Barbell.pdf", 
        device = "pdf", 
-       width = 7, 
+       width = 8, 
        height = 5)
