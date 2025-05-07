@@ -78,6 +78,41 @@ barbell_efficiency = function(data, group_by_var, sharedY = FALSE) {
              Design = factor(x = Design, 
                              levels = c("SRS", "ETS (X1)", "ETS (PC1)"), 
                              labels = c("SRS", TeX("ETS-$X_1^*$"), TeX("ETS-$PC_1^*$")))) 
+    
+    ## Calculate efficiency (by group)
+    data = data |> 
+      group_by(Model, Design, {{ group_by_var }}) |> 
+      summarize(Efficiency = 1 / var(est_beta1)) 
+    barbell_data = data |>
+      group_by(Model, {{ group_by_var }}) |> 
+      summarize(minEff = min(Efficiency), 
+                maxEff = max(Efficiency))
+    
+    ## Create the plot 
+    data |> 
+      ggplot(aes(x = Model, 
+                 y = log(Efficiency), 
+                 color = Design)) + 
+      geom_segment(data = barbell_data,
+                   aes(x = Model, y = log(minEff),
+                       xend = Model, yend = log(maxEff)),
+                   color = "#aeb6bf",
+                   linewidth = 4.5, 
+                   alpha = 0.5) +
+      geom_point(size = 4) + 
+      facet_grid(cols = vars({{ group_by_var }}), 
+                 scales = "free") + 
+      theme_minimal(base_size = 14) + 
+      scale_color_colorblind(labels = parse.labels) + 
+      xlab(TeX("Model of $Y \\sim X_j$", bold = TRUE)) + 
+      ylab(TeX("Empirical Efficiency of Coefficient Estimate on $X_j$ (Log-Transformed)", bold = TRUE)) + 
+      scale_x_discrete(labels = parse.labels) + 
+      theme(strip.background = element_rect(fill = "black"), 
+            strip.text = element_text(color = "white"), 
+            legend.title = element_text(face = "bold"), 
+            legend.position = "top", 
+            panel.spacing = unit(1, "lines")) + 
+      coord_flip() 
   } else {
     data = data |> 
       mutate(Model = paste0("Y", sub(pattern = "X", replacement = "", x = Model), " ~ ", Model), 
@@ -91,40 +126,40 @@ barbell_efficiency = function(data, group_by_var, sharedY = FALSE) {
              Design = factor(x = Design, 
                              levels = c("SRS", "ETS (X1)", "ETS (PC1)"), 
                              labels = c("SRS", TeX("ETS-$X_1^*$"), TeX("ETS-$PC_1^*$")))) 
+    
+    ## Calculate efficiency (by group)
+    data = data |> 
+      group_by(Model, Design, {{ group_by_var }}) |> 
+      summarize(Efficiency = 1 / var(est_beta1)) 
+    barbell_data = data |>
+      group_by(Model, {{ group_by_var }}) |> 
+      summarize(minEff = min(Efficiency), 
+                maxEff = max(Efficiency))
+    
+    ## Create the plot 
+    data |> 
+      ggplot(aes(x = Model, 
+                 y = log(Efficiency), 
+                 color = Design)) + 
+      geom_segment(data = barbell_data,
+                   aes(x = Model, y = log(minEff),
+                       xend = Model, yend = log(maxEff)),
+                   color = "#aeb6bf",
+                   linewidth = 4.5, 
+                   alpha = 0.5) +
+      geom_point(size = 4) + 
+      facet_grid(cols = vars({{ group_by_var }}), 
+                 scales = "free") + 
+      theme_minimal(base_size = 14) + 
+      scale_color_colorblind(labels = parse.labels) + 
+      xlab(TeX("Model of $Y_j \\sim X_j$", bold = TRUE)) + 
+      ylab(TeX("Empirical Efficiency of Coefficient Estimate on $X_j$ (Log-Transformed)", bold = TRUE)) + 
+      scale_x_discrete(labels = parse.labels) + 
+      theme(strip.background = element_rect(fill = "black"), 
+            strip.text = element_text(color = "white"), 
+            legend.title = element_text(face = "bold"), 
+            legend.position = "top", 
+            panel.spacing = unit(1, "lines")) + 
+      coord_flip() 
   }
-
-  ## Calculate efficiency (by group)
-  data = data |> 
-    group_by(Model, Design, {{ group_by_var }}) |> 
-    summarize(Efficiency = 1 / var(est_beta1)) 
-  barbell_data = data |>
-    group_by(Model, {{ group_by_var }}) |> 
-    summarize(minEff = min(Efficiency), 
-              maxEff = max(Efficiency))
-  
-  ## Create the plot 
-  data |> 
-    ggplot(aes(x = Model, 
-               y = log(Efficiency), 
-               color = Design)) + 
-    geom_segment(data = barbell_data,
-                 aes(x = Model, y = log(minEff),
-                     xend = Model, yend = log(maxEff)),
-                 color = "#aeb6bf",
-                 linewidth = 4.5, 
-                 alpha = 0.5) +
-    geom_point(size = 4) + 
-    facet_grid(cols = vars({{ group_by_var }}), 
-               scales = "free") + 
-    theme_minimal(base_size = 14) + 
-    scale_color_colorblind(labels = parse.labels) + 
-    xlab(TeX("Model of $Y_j \\sim X_j$", bold = TRUE)) + 
-    ylab(TeX("Empirical Efficiency of Coefficient Estimate on $X_j$ (Log-Transformed)", bold = TRUE)) + 
-    scale_x_discrete(labels = parse.labels) + 
-    theme(strip.background = element_rect(fill = "black"), 
-          strip.text = element_text(color = "white"), 
-          legend.title = element_text(face = "bold"), 
-          legend.position = "top", 
-          panel.spacing = unit(1, "lines")) + 
-    coord_flip() 
 }
