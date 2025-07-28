@@ -63,7 +63,7 @@ for (pv in seq(0.1, 0.25, by = 0.05)) {
                   Covar = "Dependent Covariates (Equal Covariance)", 
                   ValProp = pv) |> 
     left_join(data.frame(Model = paste0("X", 1:5), 
-                         Truth = beta1)) |> 
+                         Truth = seq(0.5, 2.5, by = 0.5))) |> 
     write.csv(file = paste0("val_prop_", pv * 100, "_", sim_seed, ".csv"), 
               row.names = FALSE)
 }
