@@ -70,7 +70,7 @@ sim_data = function(N = 1000, n = 100, beta1 = seq(0.5, 2.5, by = 0.5), cov_X = 
     ## Put data together
     dat = data.frame(Y, X, Z, Xstar, V)
   } else if (phII == "ETS_PCA") {
-    pc = princomp(X, cor = TRUE)
+    pc = princomp(Xstar, cor = TRUE)
     pc1 = data.frame(row_num = 1:N, 
                      pc = pc$scores[, 1]) ## extract the first principal component
     
