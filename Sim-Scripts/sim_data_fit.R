@@ -66,48 +66,25 @@ sim_data = function(N = 1000, n = 100, beta1 = seq(0.5, 2.5, by = 0.5), cov_X = 
   }
   ## Simulate validation indicator V
   if (phII == "SRS") {
-    V = as.numeric(1:N <= n)
+    ## Simple random sampling
+    V = sample_srs(phI = N, ## Phase I sample size
+                   phII = n) ## Phase II (validation study) sample size)
+    
     ## Put data together
     dat = data.frame(Y, X, Z, Xstar, V)
   } else if (phII == "ETS_PCA") {
-    pc = princomp(Xstar, cor = TRUE)
-    pc1 = data.frame(row_num = 1:N, 
-                     pc = pc$scores[, 1]) ## extract the first principal component
-    
-    ## Order ascendingly by first principal component
-    pc1 = pc1[order(pc1$pc, decreasing = FALSE), ]
-    ### Only validate smallest n/2 principal components
-    smallest_pc1 = pc1$row_num[1:(n / 2)]
-    
-    ## Re-order descendingly by first principal component
-    pc1 = pc1[order(pc1$pc, decreasing = TRUE), ]
-    ### Only validate smallest n/2 residuals
-    largest_pc1 = pc1$row_num[1:(n / 2)]
-    
-    ## Define validation indicator
-    V = as.numeric(1:N %in% c(smallest_pc1, largest_pc1))
-    
-    ## Re-order by row number to merge into data
-    pc1 = pc1[order(pc1$row_num, decreasing = FALSE), ]
+    ## Extreme tail sampling on the first principal component
+    V = sample_pca(pca_dat = Xstar, ## sample on first PC of X1*, ..., X5*
+                   phI = N, ## Phase I sample size
+                   phII = n) ## Phase II (validation study) sample size
     
     ## Put data together
     dat = data.frame(Y, X, Z, Xstar, V, pc1)
   } else if (phII == "ETS_X1") {
-    justXstar1 = data.frame(row_num = 1:N, 
-                            Xstar1 = Xstar[, 1]) 
-    
-    ## Order ascendingly by X*1
-    justXstar1 = justXstar1[order(justXstar1$Xstar1, decreasing = FALSE), ]
-    ### Only validate smallest n/2 X*1
-    smallest_Xstar1 = justXstar1$row_num[1:(n / 2)]
-    
-    ## Re-order descendingly by first principal component
-    justXstar1 = justXstar1[order(justXstar1$Xstar1, decreasing = TRUE), ]
-    ### Only validate smallest n/2 residuals
-    largest_Xstar1 = justXstar1$row_num[1:(n / 2)]
-    
-    ## Define validation indicator
-    V = as.numeric(1:N %in% c(smallest_Xstar1, largest_Xstar1))
+    ## Extreme tail sampling on X1*
+    V = sample_ets(ets_dat = Xstar[, 1], ## sample on X1*
+                   phI = N, ## Phase I sample size
+                   phII = n) ## Phase II (validation study) sample size
     
     ## Put data together
     dat = data.frame(Y, X, Z, Xstar, V)
