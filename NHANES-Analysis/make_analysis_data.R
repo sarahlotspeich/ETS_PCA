@@ -47,7 +47,8 @@ demos[,"useFlag"] = ifelse(test = rowSums(is.na(demos[c(2:11, 14:15, 17, 24)])) 
 
 # Subset to complete cases 
 analysis_data = demos |> 
-  filter(useFlag == "Y") 
+  filter(useFlag == "Y") |> 
+  dplyr::select(-useFlag)
 
 # Rename columns to match notation in paper
 colnames(analysis_data)[2:11] = c(paste0("Y", 1:5), paste0("X", 1:5))
