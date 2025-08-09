@@ -79,6 +79,8 @@ analysis_data = analysis_data |>
   bind_cols(Xstar)
 
 ## Save data 
+## Convert factor covariates, subset to necessary columns
 analysis_data |> 
+  dplyr::select(SEQN, Y1:X5, Xstar1:Xstar5, RIAGENDR, RIDAGEYR, RIDRETH1, DMDEDUC2)  |>
   write.csv("NHANES-Analysis/analysis_data_with_errors.csv", 
             row.names = FALSE)
