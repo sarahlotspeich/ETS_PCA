@@ -52,6 +52,11 @@ analysis_data = demos |>
 # Rename columns to match notation in paper
 colnames(analysis_data)[2:11] = c(paste0("Y", 1:5), paste0("X", 1:5))
 
+## Save data 
+analysis_data |> 
+  write.csv("NHANES-Analysis/analysis_data_orig.csv", 
+            row.names = FALSE)
+
 # //////////////////////////////////////////////////////////////////////////////
 # Add simulated covariate measurement error ////////////////////////////////////
 # //////////////////////////////////////////////////////////////////////////////
@@ -74,5 +79,5 @@ analysis_data = analysis_data |>
 
 ## Save data 
 analysis_data |> 
-  write.csv("NHANES-Analysis/analysis_data.csv", 
+  write.csv("NHANES-Analysis/analysis_data_with_errors.csv", 
             row.names = FALSE)
