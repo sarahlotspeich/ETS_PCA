@@ -163,3 +163,20 @@ sim_data_fit = function(sim_id, N = 1000, n = 100, beta1 = seq(0.5, 2.5, by = 0.
   }
   return(fits)
 }
+
+# Function to simulate data and then fit single imputation model
+sim_data_pca = function(sim_id, N = 1000, n = 100, beta1 = seq(0.5, 2.5, by = 0.5), cov_X = diag(x = 1, nrow = 5), cov_U = diag(x = 1, nrow = 5), same_Y_type = TRUE, shared_Y = FALSE) {
+  ## Simulate data 
+  dat = sim_data(N = N, 
+                 n = n, 
+                 beta1 = beta1, 
+                 cov_X = cov_X, 
+                 cov_U = cov_U, 
+                 phII = phII, 
+                 same_Y_type = same_Y_type, 
+                 shared_Y = shared_Y) 
+  
+  ## Calculate PCA 
+  pca_dat = princomp(dat[, paste0("Xstar", 1:5)], cor = TRUE) 
+  return(as.numeric(pca_dat$sdev[1]^2 / sum(pca_dat$sdev)))
+}
