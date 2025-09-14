@@ -165,7 +165,7 @@ sim_data_fit = function(sim_id, N = 1000, n = 100, beta1 = seq(0.5, 2.5, by = 0.
 }
 
 # Function to simulate data and then fit single imputation model
-sim_data_pca = function(sim_id, N = 1000, n = 100, beta1 = seq(0.5, 2.5, by = 0.5), cov_X = diag(x = 1, nrow = 5), cov_U = diag(x = 1, nrow = 5), same_Y_type = TRUE, shared_Y = FALSE) {
+sim_data_pca = function(sim_id, N = 1000, n = 100, beta1 = seq(0.5, 2.5, by = 0.5), cov_X = diag(x = 1, nrow = 5), cov_U = diag(x = 1, nrow = 5), phII = "SRS",  same_Y_type = TRUE, shared_Y = FALSE) {
   ## Simulate data 
   dat = sim_data(N = N, 
                  n = n, 
