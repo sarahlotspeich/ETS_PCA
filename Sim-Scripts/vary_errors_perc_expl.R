@@ -20,7 +20,7 @@ diag(equal_cov) = 1
 
 # Loop over different validation proportions
 N = 1000
-for (sigmaU in c(0.1, 0.25, 0.5, 1)) {
+for (sigmaU in c(0.25, 0.5, 1)) {
   set.seed(sim_seed) ## be reproducible
   sett2_results = do.call(what = rbind,
                           args = sapply(X = 1:REPS,
@@ -31,7 +31,6 @@ for (sigmaU in c(0.1, 0.25, 0.5, 1)) {
   print(paste0("sigmaU = ", sigmaU, ": ", round(mean(sett2_results), 2)))
 }
 
-# [1] "sigmaU = 0.1: 0.71"
 # [1] "sigmaU = 0.25: 0.64"
 # [1] "sigmaU = 0.5: 0.57"
 # [1] "sigmaU = 1: 0.48"
