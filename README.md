@@ -1,5 +1,4 @@
-Sampling on Principal Components to Strategically Validate Error-Prone
-Data While Balancing Multiple Models
+Strategically Validating Error-Prone Data While Balancing Multiple Models Using Principal Components
 ================
 Sarah C. Lotspeich and Cole Manschot
 9 August 2025
