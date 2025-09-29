@@ -18,23 +18,24 @@ plot_dat = plot_dat |>
                                           "Dependent Covariates (Unequal Covariance)"), 
                                labels = c("Independent Covariates\n(Zero Covariance)", 
                                           "Dependent Covariates\n(Equal Covariance)",
-                                          "Dependent Covariates\n(Unequal Covariance)"
-                               ))) 
+                                          "Dependent Covariates\n(Unequal Covariance)"))) 
 
 # Boxplot of coefficient estimates
-plot_dat |> 
+covar_struct_plot = plot_dat |> 
   boxplot_estimates(col_facet_var = Covar)
 ## Save it 
-ggsave(filename = "~/Documents/ETS_PCA/Plots/Vary_Covariance_Structure.pdf", 
+ggsave(plot = covar_struct_plot, 
+	   filename = "~/Documents/ETS_PCA/Plots/Vary_Covariance_Structure.pdf", 
        device = "pdf", 
        width = 8, 
        height = 10)
 
 # Barbell plot of relative efficiency
-plot_dat |> 
+covar_struct_barbell_plot = plot_dat |> 
   barbell_efficiency(group_by_var = Covar)
 ## Save it 
-ggsave(filename = "~/Documents/ETS_PCA/Plots/Vary_Covariance_Structure_Barbell.pdf", 
+ggsave(plot = covar_struct_barbell_plot, 
+	   filename = "~/Documents/ETS_PCA/Plots/Vary_Covariance_Structure_Barbell.pdf", 
        device = "pdf", 
        width = 8, 
        height = 5)

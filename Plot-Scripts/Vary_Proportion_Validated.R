@@ -19,19 +19,21 @@ plot_dat = plot_dat |>
                                                  "% Validated"))) 
 
 # Boxplot of coefficient estimates
-plot_dat |> 
+val_prop_plot = plot_dat |> 
   boxplot_estimates(col_facet_var = ValProp)
 ## Save it 
-ggsave(filename = "~/Documents/ETS_PCA/Plots/Vary_Proportion_Validated.pdf", 
+ggsave(plot = val_prop_plot, 
+	   filename = "~/Documents/ETS_PCA/Plots/Vary_Proportion_Validated.pdf", 
        device = "pdf", 
        width = 8, 
        height = 10)
 
 # Barbell plot of relative efficiency
-plot_dat |> 
+val_prop_barbell_plot = plot_dat |> 
   barbell_efficiency(group_by_var = ValProp)
 ## Save it 
-ggsave(filename = "~/Documents/ETS_PCA/Plots/Vary_Proportion_Validated_Barbell.pdf", 
+ggsave(plot = val_prop_barbell_plot, 
+	   filename = "~/Documents/ETS_PCA/Plots/Vary_Proportion_Validated_Barbell.pdf", 
        device = "pdf", 
        width = 8, 
        height = 5)

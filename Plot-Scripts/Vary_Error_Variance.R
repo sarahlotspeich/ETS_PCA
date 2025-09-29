@@ -19,19 +19,21 @@ plot_dat = plot_dat |>
   dplyr::filter(ErrorVar != "Error Variance = 0.01")
 
 # Boxplot of coefficient estimates
-plot_dat |> 
+error_var_plot = plot_dat |> 
   boxplot_estimates(col_facet_var = ErrorVar)
 ## Save it 
-ggsave(filename = "~/Documents/ETS_PCA/Plots/Vary_Error_Variance.pdf", 
+ggsave(plot = error_var_plot, 
+	   filename = "~/Documents/ETS_PCA/Plots/Vary_Error_Variance.pdf", 
        device = "pdf", 
        width = 8, 
        height = 10)
 
 # Barbell plot of relative efficiency
-plot_dat |> 
+error_var_barbell_plot = plot_dat |> 
   barbell_efficiency(group_by_var = ErrorVar)
 ## Save it 
-ggsave(filename = "~/Documents/ETS_PCA/Plots/Vary_Error_Variance_Barbell.pdf", 
+ggsave(plot = error_var_barbell_plot, 
+	   filename = "~/Documents/ETS_PCA/Plots/Vary_Error_Variance_Barbell.pdf", 
        device = "pdf", 
        width = 8, 
        height = 5)
