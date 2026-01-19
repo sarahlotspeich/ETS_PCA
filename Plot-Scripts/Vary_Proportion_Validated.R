@@ -37,3 +37,13 @@ ggsave(plot = val_prop_barbell_plot,
        device = "pdf", 
        width = 8, 
        height = 5)
+
+# Bar plot of sum of variances
+val_prop_bar_plot = plot_dat |> 
+  bar_sum_var(group_by_var = ValProp)
+## Save it 
+ggsave(plot = val_prop_bar_plot, 
+       filename = "~/Documents/ETS_PCA/Plots/Vary_Proportion_Validated_Bar.pdf", 
+       device = "pdf", 
+       width = 8, 
+       height = 5)

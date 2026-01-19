@@ -1,5 +1,4 @@
 # Load data 
-parse.labels <- function(x) parse(text = x)
 p = c("https://raw.githubusercontent.com/sarahlotspeich/ETS_PCA/refs/heads/main/Sim-Data/dep_covar_equal_11422.csv", 
       "https://raw.githubusercontent.com/sarahlotspeich/ETS_PCA/refs/heads/main/Sim-Data/dep_covar_unequal_11422.csv", 
       "https://raw.githubusercontent.com/sarahlotspeich/ETS_PCA/refs/heads/main/Sim-Data/indep_covar_11422.csv")
@@ -36,6 +35,16 @@ covar_struct_barbell_plot = plot_dat |>
 ## Save it 
 ggsave(plot = covar_struct_barbell_plot, 
 	   filename = "~/Documents/ETS_PCA/Plots/Vary_Covariance_Structure_Barbell.pdf", 
+       device = "pdf", 
+       width = 8, 
+       height = 5)
+
+# Bar plot of sum of variances
+covar_struct_bar_plot = plot_dat |> 
+  bar_sum_var(group_by_var = Covar)
+## Save it 
+ggsave(plot = covar_struct_bar_plot, 
+       filename = "~/Documents/ETS_PCA/Plots/Vary_Covariance_Structure_Bar.pdf", 
        device = "pdf", 
        width = 8, 
        height = 5)

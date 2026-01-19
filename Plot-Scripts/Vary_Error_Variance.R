@@ -37,3 +37,13 @@ ggsave(plot = error_var_barbell_plot,
        device = "pdf", 
        width = 8, 
        height = 5)
+
+# Bar plot of sum of variances
+error_var_bar_plot = plot_dat |> 
+  bar_sum_var(group_by_var = ErrorVar)
+## Save it 
+ggsave(plot = error_var_bar_plot, 
+       filename = "~/Documents/ETS_PCA/Plots/Vary_Error_Variance_Bar.pdf", 
+       device = "pdf", 
+       width = 8, 
+       height = 5)
