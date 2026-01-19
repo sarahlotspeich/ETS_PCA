@@ -226,7 +226,7 @@ bar_sum_var = function(data, group_by_var, fill_by_model = FALSE) {
       scale_fill_colorblind(labels = parse.labels, 
                             guide = "none") + 
       xlab(TeX("Design", bold = TRUE)) + 
-      ylab(TeX("Sum of Empirical Variances for Coefficient Estimates on $X_j$ Across All Models", bold = TRUE))
+      ylab(TeX("Sum of Empirical Variances for Coefficient Estimates on $X_j$ Across All Models", bold = TRUE)) + 
       scale_x_discrete(labels = parse.labels) + 
       theme(strip.background = element_rect(fill = "black"), 
             strip.text = element_text(color = "white"), 
