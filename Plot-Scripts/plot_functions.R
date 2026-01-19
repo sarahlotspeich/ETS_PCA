@@ -163,3 +163,77 @@ barbell_efficiency = function(data, group_by_var, sharedY = FALSE) {
       coord_flip() 
   }
 }
+
+# Function to create barbell plot of empirical efficiency 
+bar_sum_var = function(data, group_by_var, fill_by_model = FALSE) {
+  if (fill_by_model) {
+    # Create sum of variances for beta1 from all models
+    data = data |> 
+      group_by(Model, Design, {{ group_by_var }}) |> 
+      summarize(var_beta = var(est_beta1)) |> 
+      mutate(Model = paste0("Y", sub(pattern = "X", replacement = "", x = Model), " ~ ", Model), 
+             Model = factor(x = Model, 
+                            levels = c("Y1 ~ X1", "Y2 ~ X2", "Y3 ~ X3", "Y4 ~ X4", "Y5 ~ X5"), 
+                            labels = c(TeX("$Y_1 \\sim X_1$"), 
+                                       TeX("$Y_2 \\sim X_2$"),
+                                       TeX("$Y_3 \\sim X_3$"), 
+                                       TeX("$Y_4 \\sim X_4$"),
+                                       TeX("$Y_5 \\sim X_5$"))),
+             Design = factor(x = Design, 
+                             levels = c("SRS", "ETS (X1)", "ETS (PC1)"), 
+                             labels = c("SRS", TeX("ETS-$X_1^*$"), TeX("ETS-$PC_1^*$")))) 
+    
+    ## Create the plot 
+    data |> 
+      ggplot(aes(x = Design, 
+                 y = var_beta, 
+                 fill = Model)) + 
+      geom_bar(stat = "identity") + 
+      facet_grid(cols = vars({{ group_by_var }}), 
+                 scales = "free") + 
+      theme_minimal(base_size = 14) + 
+      scale_fill_colorblind(labels = parse.labels) + 
+      xlab(TeX("Design", bold = TRUE)) + 
+      ylab(TeX("Sum of Variances Across Models $\\sum_{j=1}^{5}\\widehat{V}(\\hat{\\beta}_{1j})$", 
+               bold = TRUE)) + 
+      scale_x_discrete(labels = parse.labels) + 
+      theme(strip.background = element_rect(fill = "black"), 
+            strip.text = element_text(color = "white"), 
+            legend.title = element_text(face = "bold"), 
+            legend.position = "top", 
+            panel.spacing = unit(1, "lines")) + 
+      coord_flip() 
+  } else {
+    # Create sum of variances for beta1 from all models
+    data = data |> 
+      group_by(Model, Design, {{ group_by_var }}) |> 
+      mutate(var_beta = var(est_beta1)) |> 
+      group_by(Design, {{ group_by_var }}) |> 
+      summarize(sum_var_beta = sum(var_beta)) |> 
+      mutate(Design = factor(x = Design, 
+                             levels = c("SRS", "ETS (X1)", "ETS (PC1)"), 
+                             labels = c("SRS", TeX("ETS-$X_1^*$"), TeX("ETS-$PC_1^*$")))) 
+    
+    ## Create the plot 
+    data |> 
+      ggplot(aes(x = Design, 
+                 y = sum_var_beta, 
+                 fill = Design)) + 
+      geom_bar(stat = "identity") + 
+      facet_grid(cols = vars({{ group_by_var }}), 
+                 scales = "free") + 
+      theme_minimal(base_size = 14) + 
+      scale_fill_colorblind(labels = parse.labels, 
+                            guide = "none") + 
+      xlab(TeX("Design", bold = TRUE)) + 
+      ylab(TeX("Sum of Variances Across Models $\\sum_{j=1}^{5}\\widehat{V}(\\hat{\\beta}_{1j})$", 
+               bold = TRUE)) + 
+      scale_x_discrete(labels = parse.labels) + 
+      theme(strip.background = element_rect(fill = "black"), 
+            strip.text = element_text(color = "white"), 
+            legend.title = element_text(face = "bold"), 
+            legend.position = "top", 
+            panel.spacing = unit(1, "lines")) + 
+      coord_flip()  
+  }
+}
