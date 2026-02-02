@@ -164,7 +164,7 @@ barbell_efficiency = function(data, group_by_var, sharedY = FALSE) {
   }
 }
 
-# Function to create barbell plot of empirical efficiency 
+# Function to create barbell plot of sum of variances 
 bar_sum_var = function(data, group_by_var, fill_by_model = FALSE) {
   if (fill_by_model) {
     # Create sum of variances for beta1 from all models
@@ -186,11 +186,20 @@ bar_sum_var = function(data, group_by_var, fill_by_model = FALSE) {
     ## Create the plot 
     data |> 
       ggplot(aes(x = Design, 
-                 y = var_beta, 
-                 fill = Model)) + 
-      geom_bar(stat = "identity") + 
+                 y = sum_var_beta, 
+                 fill = Design, 
+                 color = Design)) + 
+      geom_segment(aes(x = Design, y = 0,
+                       xend = Design, yend = sum_var_beta),
+                   #color = "#aeb6bf",
+                   linewidth = 6.5, 
+                   alpha = 0.5) +
+      geom_point(size = 6) + 
+      #geom_bar(stat = "identity") + 
       facet_grid(cols = vars({{ group_by_var }}), 
                  scales = "free") + 
+      scale_fill_colorblind(labels = parse.labels, 
+                            guide = "none") + 
       theme_minimal(base_size = 14) + 
       scale_fill_colorblind(labels = parse.labels) + 
       xlab(TeX("Design", bold = TRUE)) + 
@@ -218,12 +227,21 @@ bar_sum_var = function(data, group_by_var, fill_by_model = FALSE) {
     data |> 
       ggplot(aes(x = Design, 
                  y = sum_var_beta, 
-                 fill = Design)) + 
-      geom_bar(stat = "identity") + 
+                 fill = Design, 
+                 color = Design)) + 
+      geom_segment(aes(x = Design, y = 0,
+                       xend = Design, yend = sum_var_beta),
+                   #color = "#aeb6bf",
+                   linewidth = 6.5, 
+                   alpha = 0.5) +
+      geom_point(size = 6) + 
+      #geom_bar(stat = "identity") + 
       facet_grid(cols = vars({{ group_by_var }}), 
                  scales = "free") + 
       theme_minimal(base_size = 14) + 
       scale_fill_colorblind(labels = parse.labels, 
+                            guide = "none") + 
+      scale_color_colorblind(labels = parse.labels, 
                             guide = "none") + 
       xlab(TeX("Design", bold = TRUE)) + 
       ylab(TeX("Sum of Empirical Variances for Coefficient Estimates on $X_j$ Across All Models", bold = TRUE)) + 
