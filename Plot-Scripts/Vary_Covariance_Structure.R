@@ -12,12 +12,12 @@ devtools::source_url("https://raw.githubusercontent.com/sarahlotspeich/ETS_PCA/r
 # Define factors
 plot_dat = plot_dat |> 
   dplyr::mutate(Covar = factor(x = Covar, 
-                               levels = c("Independent Covariates (Zero Covariance)", 
-                                          "Dependent Covariates (Equal Covariance)",
-                                          "Dependent Covariates (Unequal Covariance)"), 
-                               labels = c("Independent Covariates\n(Zero Covariance)", 
-                                          "Dependent Covariates\n(Equal Covariance)",
-                                          "Dependent Covariates\n(Unequal Covariance)"))) 
+                               levels = c("Independent Exposures (Zero Covariance)", 
+                                          "Dependent Exposures (Equal Covariance)",
+                                          "Dependent Exposures (Unequal Covariance)"), 
+                               labels = c("Independent Exposures\n(Zero Covariance)", 
+                                          "Dependent Exposures\n(Equal Covariance)",
+                                          "Dependent Exposures\n(Unequal Covariance)"))) 
 
 # Boxplot of coefficient estimates
 covar_struct_plot = plot_dat |> 
