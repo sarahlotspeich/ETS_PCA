@@ -59,6 +59,8 @@ boxplot_estimates = function(data, col_facet_var, sharedY = FALSE) {
     scale_x_discrete(labels = parse.labels) + 
     theme(strip.background = element_rect(fill = "black"), 
           strip.text = element_text(color = "white"), 
+          panel.border = element_rect(colour = "black", fill = NA),
+          panel.spacing = unit(0, "pt"),
           legend.title = element_text(face = "bold"), 
           legend.position = "top")
 }
@@ -109,6 +111,8 @@ barbell_efficiency = function(data, group_by_var, sharedY = FALSE) {
       scale_x_discrete(labels = parse.labels) + 
       theme(strip.background = element_rect(fill = "black"), 
             strip.text = element_text(color = "white"), 
+            panel.border = element_rect(colour = "black", fill = NA),
+            panel.spacing = unit(0, "pt"),
             legend.title = element_text(face = "bold"), 
             legend.position = "top", 
             panel.spacing = unit(1, "lines")) + 
@@ -157,6 +161,8 @@ barbell_efficiency = function(data, group_by_var, sharedY = FALSE) {
       scale_x_discrete(labels = parse.labels) + 
       theme(strip.background = element_rect(fill = "black"), 
             strip.text = element_text(color = "white"), 
+            panel.border = element_rect(colour = "black", fill = NA),
+            panel.spacing = unit(0, "pt"),
             legend.title = element_text(face = "bold"), 
             legend.position = "top", 
             panel.spacing = unit(1, "lines")) + 
@@ -191,11 +197,9 @@ bar_sum_var = function(data, group_by_var, fill_by_model = FALSE) {
                  color = Design)) + 
       geom_segment(aes(x = Design, y = 0,
                        xend = Design, yend = sum_var_beta),
-                   #color = "#aeb6bf",
                    linewidth = 6.5, 
                    alpha = 0.5) +
       geom_point(size = 6) + 
-      #geom_bar(stat = "identity") + 
       facet_grid(cols = vars({{ group_by_var }}), 
                  scales = "free") + 
       scale_fill_colorblind(labels = parse.labels, 
@@ -208,6 +212,8 @@ bar_sum_var = function(data, group_by_var, fill_by_model = FALSE) {
       scale_x_discrete(labels = parse.labels) + 
       theme(strip.background = element_rect(fill = "black"), 
             strip.text = element_text(color = "white"), 
+            panel.border = element_rect(colour = "black", fill = NA),
+            panel.spacing = unit(0, "pt"),
             legend.title = element_text(face = "bold"), 
             legend.position = "top", 
             panel.spacing = unit(1, "lines")) + 
@@ -231,11 +237,9 @@ bar_sum_var = function(data, group_by_var, fill_by_model = FALSE) {
                  color = Design)) + 
       geom_segment(aes(x = Design, y = 0,
                        xend = Design, yend = sum_var_beta),
-                   #color = "#aeb6bf",
                    linewidth = 6.5, 
                    alpha = 0.5) +
       geom_point(size = 6) + 
-      #geom_bar(stat = "identity") + 
       facet_grid(cols = vars({{ group_by_var }}), 
                  scales = "free") + 
       theme_minimal(base_size = 14) + 
@@ -248,6 +252,8 @@ bar_sum_var = function(data, group_by_var, fill_by_model = FALSE) {
       scale_x_discrete(labels = parse.labels) + 
       theme(strip.background = element_rect(fill = "black"), 
             strip.text = element_text(color = "white"), 
+            panel.border = element_rect(colour = "black", fill = NA),
+            panel.spacing = unit(0, "pt"),
             legend.title = element_text(face = "bold"), 
             legend.position = "top", 
             panel.spacing = unit(1, "lines")) + 
