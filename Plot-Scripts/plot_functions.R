@@ -59,7 +59,7 @@ boxplot_estimates = function(data, col_facet_var, sharedY = FALSE) {
     scale_x_discrete(labels = parse.labels) + 
     theme(strip.background = element_rect(fill = "black"), 
           strip.text = element_text(color = "white"), 
-          panel.border = element_rect(colour = "black", fill = NA),
+          panel.border = element_rect(color = "black", fill = NA),
           panel.spacing = unit(0, "pt"),
           legend.title = element_text(face = "bold"), 
           legend.position = "top")
@@ -111,7 +111,7 @@ barbell_efficiency = function(data, group_by_var, sharedY = FALSE) {
       scale_x_discrete(labels = parse.labels) + 
       theme(strip.background = element_rect(fill = "black"), 
             strip.text = element_text(color = "white"), 
-            panel.border = element_rect(colour = "black", fill = NA),
+            panel.border = element_rect(color = "black", fill = NA),
             panel.spacing = unit(0, "pt"),
             legend.title = element_text(face = "bold"), 
             legend.position = "top", 
@@ -161,7 +161,7 @@ barbell_efficiency = function(data, group_by_var, sharedY = FALSE) {
       scale_x_discrete(labels = parse.labels) + 
       theme(strip.background = element_rect(fill = "black"), 
             strip.text = element_text(color = "white"), 
-            panel.border = element_rect(colour = "black", fill = NA),
+            panel.border = element_rect(color = "black", fill = NA),
             panel.spacing = unit(0, "pt"),
             legend.title = element_text(face = "bold"), 
             legend.position = "top", 
@@ -212,7 +212,7 @@ bar_sum_var = function(data, group_by_var, fill_by_model = FALSE) {
       scale_x_discrete(labels = parse.labels) + 
       theme(strip.background = element_rect(fill = "black"), 
             strip.text = element_text(color = "white"), 
-            panel.border = element_rect(colour = "black", fill = NA),
+            panel.border = element_rect(color = "black", fill = NA),
             panel.spacing = unit(0, "pt"),
             legend.title = element_text(face = "bold"), 
             legend.position = "top", 
@@ -252,7 +252,7 @@ bar_sum_var = function(data, group_by_var, fill_by_model = FALSE) {
       scale_x_discrete(labels = parse.labels) + 
       theme(strip.background = element_rect(fill = "black"), 
             strip.text = element_text(color = "white"), 
-            panel.border = element_rect(colour = "black", fill = NA),
+            panel.border = element_rect(color = "black", fill = NA),
             panel.spacing = unit(0, "pt"),
             legend.title = element_text(face = "bold"), 
             legend.position = "top", 
