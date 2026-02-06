@@ -13,7 +13,7 @@ devtools::source_url("https://raw.githubusercontent.com/sarahlotspeich/ETS_PCA/r
 # Define factors
 plot_dat = plot_dat |> 
   dplyr::mutate(ErrorVar = factor(x = ErrorVar, 
-                                  levels = c(0.1, 0.25, 0.5, 1), 
+                                  levels = c(0.01, 0.0625, 0.25, 1), 
                                   labels = paste0("Error Variance = ", 
                                                   c(0.1, 0.25, 0.5, 1)))) |> 
   dplyr::filter(ErrorVar != "Error Variance = 0.1")
