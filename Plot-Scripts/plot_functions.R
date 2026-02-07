@@ -237,7 +237,7 @@ bar_sum_var = function(data, group_by_var, fill_by_model = FALSE, sharedY = FALS
         geom_point(size = 6) + 
         facet_grid(cols = vars({{ group_by_var }}), 
                    scales = "free", 
-                   labeller = parse.labels) + 
+                   labeller = label_parsed) + 
         theme_minimal(base_size = 14) + 
         scale_fill_colorblind(labels = parse.labels, 
                               guide = "none") + 

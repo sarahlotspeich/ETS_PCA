@@ -1,4 +1,5 @@
-Strategically Validating Error-Prone Data While Balancing Multiple Models Using Principal Components
+Sampling on Principal Components to Strategically Validate Error-Prone
+Data While Balancing Multiple Models
 ================
 Sarah C. Lotspeich and Cole Manschot
 9 August 2025
@@ -424,6 +425,18 @@ for (j in 1:5) {
 
 ## Results
 
-<img src="README_files/figure-gfm/unnamed-chunk-6-1.png"  />
+<img src="README_files/figure-gfm/unnamed-chunk-6-1.png" alt=""  />
 
-<img src="README_files/figure-gfm/unnamed-chunk-7-1.png"  />
+<img src="README_files/figure-gfm/unnamed-chunk-7-1.png" alt=""  />
+
+``` r
+library(patchwork)
+both = (plot_coeff / plot_ciwidth) + 
+  plot_annotation(tag_levels = 'A')
+## Save it 
+ggsave(plot = both, 
+       filename = "~/Documents/ETS_PCA/NHANES-Analysis/nhanes_forest_bar.pdf", 
+       device = "pdf", 
+       width = 10, 
+       height = 10)
+```
