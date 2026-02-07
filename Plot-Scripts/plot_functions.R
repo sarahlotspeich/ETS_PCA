@@ -209,7 +209,6 @@ bar_sum_var = function(data, group_by_var, fill_by_model = FALSE) {
       scale_x_discrete(labels = parse.labels) + 
       theme(strip.background = element_rect(fill = "black"), 
             strip.text = element_text(color = "white"), 
-            #panel.border = element_rect(color = "black", fill = NA),
             legend.title = element_text(face = "bold"), 
             legend.position = "top", 
             panel.spacing = unit(1, "lines")) + 
@@ -237,7 +236,8 @@ bar_sum_var = function(data, group_by_var, fill_by_model = FALSE) {
                    alpha = 0.5) +
       geom_point(size = 6) + 
       facet_grid(cols = vars({{ group_by_var }}), 
-                 scales = "free") + 
+                 scales = "free", 
+                 labeller = parse.labels) + 
       theme_minimal(base_size = 14) + 
       scale_fill_colorblind(labels = parse.labels, 
                             guide = "none") + 
@@ -248,7 +248,6 @@ bar_sum_var = function(data, group_by_var, fill_by_model = FALSE) {
       scale_x_discrete(labels = parse.labels) + 
       theme(strip.background = element_rect(fill = "black"), 
             strip.text = element_text(color = "white"), 
-            #panel.border = element_rect(color = "black", fill = NA),
             legend.title = element_text(face = "bold"), 
             legend.position = "top", 
             panel.spacing = unit(1, "lines")) + 
