@@ -159,7 +159,6 @@ barbell_efficiency = function(data, group_by_var, sharedY = FALSE) {
       scale_x_discrete(labels = parse.labels) + 
       theme(strip.background = element_rect(fill = "black"), 
             strip.text = element_text(color = "white"), 
-            #panel.border = element_rect(color = "black", fill = NA),
             legend.title = element_text(face = "bold"), 
             legend.position = "top", 
             panel.spacing = unit(1, "lines")) + 
@@ -168,7 +167,7 @@ barbell_efficiency = function(data, group_by_var, sharedY = FALSE) {
 }
 
 # Function to create barbell plot of sum of variances 
-bar_sum_var = function(data, group_by_var, fill_by_model = FALSE) {
+bar_sum_var = function(data, group_by_var, fill_by_model = FALSE, sharedY = FALSE) {
   if (fill_by_model) {
     # Create sum of variances for beta1 from all models
     data = data |> 
@@ -225,32 +224,61 @@ bar_sum_var = function(data, group_by_var, fill_by_model = FALSE) {
                              labels = c("SRS", TeX("ETS-$X_1^*$"), TeX("ETS-$PC_1^*$")))) 
     
     ## Create the plot 
-    data |> 
-      ggplot(aes(x = Design, 
-                 y = sum_var_beta, 
-                 fill = Design, 
-                 color = Design)) + 
-      geom_segment(aes(x = Design, y = 0,
-                       xend = Design, yend = sum_var_beta),
-                   linewidth = 6.5, 
-                   alpha = 0.5) +
-      geom_point(size = 6) + 
-      facet_grid(cols = vars({{ group_by_var }}), 
-                 scales = "free", 
-                 labeller = parse.labels) + 
-      theme_minimal(base_size = 14) + 
-      scale_fill_colorblind(labels = parse.labels, 
-                            guide = "none") + 
-      scale_color_colorblind(labels = parse.labels, 
-                            guide = "none") + 
-      xlab(TeX("Design", bold = TRUE)) + 
-      ylab(TeX("Empirical Total Coefficient Variability Across All Models", bold = TRUE)) + 
-      scale_x_discrete(labels = parse.labels) + 
-      theme(strip.background = element_rect(fill = "black"), 
-            strip.text = element_text(color = "white"), 
-            legend.title = element_text(face = "bold"), 
-            legend.position = "top", 
-            panel.spacing = unit(1, "lines")) + 
-      coord_flip()  
+    if (sharedY) {
+      data |> 
+        ggplot(aes(x = Design, 
+                   y = sum_var_beta, 
+                   fill = Design, 
+                   color = Design)) + 
+        geom_segment(aes(x = Design, y = 0,
+                         xend = Design, yend = sum_var_beta),
+                     linewidth = 6.5, 
+                     alpha = 0.5) +
+        geom_point(size = 6) + 
+        facet_grid(cols = vars({{ group_by_var }}), 
+                   scales = "free", 
+                   labeller = parse.labels) + 
+        theme_minimal(base_size = 14) + 
+        scale_fill_colorblind(labels = parse.labels, 
+                              guide = "none") + 
+        scale_color_colorblind(labels = parse.labels, 
+                               guide = "none") + 
+        xlab(TeX("Design", bold = TRUE)) + 
+        ylab(TeX("Empirical Total Coefficient Variability Across All Models", bold = TRUE)) + 
+        scale_x_discrete(labels = parse.labels) + 
+        theme(strip.background = element_rect(fill = "black"), 
+              strip.text = element_text(color = "white"), 
+              legend.title = element_text(face = "bold"), 
+              legend.position = "top", 
+              panel.spacing = unit(1, "lines")) + 
+        coord_flip()  
+    } else {
+      data |> 
+        ggplot(aes(x = Design, 
+                   y = sum_var_beta, 
+                   fill = Design, 
+                   color = Design)) + 
+        geom_segment(aes(x = Design, y = 0,
+                         xend = Design, yend = sum_var_beta),
+                     linewidth = 6.5, 
+                     alpha = 0.5) +
+        geom_point(size = 6) + 
+        facet_grid(cols = vars({{ group_by_var }}), 
+                   scales = "free") + 
+        theme_minimal(base_size = 14) + 
+        scale_fill_colorblind(labels = parse.labels, 
+                              guide = "none") + 
+        scale_color_colorblind(labels = parse.labels, 
+                               guide = "none") + 
+        xlab(TeX("Design", bold = TRUE)) + 
+        ylab(TeX("Empirical Total Coefficient Variability Across All Models", bold = TRUE)) + 
+        scale_x_discrete(labels = parse.labels) + 
+        theme(strip.background = element_rect(fill = "black"), 
+              strip.text = element_text(color = "white"), 
+              legend.title = element_text(face = "bold"), 
+              legend.position = "top", 
+              panel.spacing = unit(1, "lines")) + 
+        coord_flip()   
+    }
   }
 }
