@@ -102,7 +102,7 @@ barbell_efficiency = function(data, group_by_var, sharedY = FALSE) {
                    alpha = 0.5) +
       geom_point(size = 4) + 
       facet_grid(cols = vars({{ group_by_var }}), 
-                 scales = "free") + 
+                 scales = "free", label = parse.labels) + 
       theme_minimal(base_size = 14) + 
       scale_color_colorblind(labels = parse.labels) + 
       xlab(TeX("Model of $Y \\sim X_j$", bold = TRUE)) + 
@@ -244,7 +244,7 @@ bar_sum_var = function(data, group_by_var, fill_by_model = FALSE) {
       scale_color_colorblind(labels = parse.labels, 
                             guide = "none") + 
       xlab(TeX("Design", bold = TRUE)) + 
-      ylab(TeX("Sum of Empirical Variances for Coefficient Estimates on $X_j$ Across All Models", bold = TRUE)) + 
+      ylab(TeX("Empirical Total Coefficient Variability Across All Models", bold = TRUE)) + 
       scale_x_discrete(labels = parse.labels) + 
       theme(strip.background = element_rect(fill = "black"), 
             strip.text = element_text(color = "white"), 
