@@ -40,8 +40,8 @@ all = all |>
     ), 
     status = factor(x = status, 
                     levels = rev(c("Both", "ETS-X Only", "ETS-X* Only", "Neither")), 
-                    labels = rev(c("Both", TeX("ETS-$X_j$ Only"), 
-                               TeX("ETS-$X_j^*$ Only"), "Neither")))
+                    labels = rev(c("Both", TeX("ETS-$X_p$ Only"), 
+                               TeX("ETS-$X_p^*$ Only"), "Neither")))
   ) |> 
   mutate(ErrorVar = factor(x = sigmaU, 
                            levels = c(0.1, 0.25, 0.5, 1), 
@@ -59,8 +59,8 @@ all |>
   theme_minimal(base_size = 14) + 
   ggthemes::scale_color_colorblind(name = "Validation Status by Design:", 
                                    labels = parse.labels) + 
-  xlab(TeX("True Exposure $X_j$", bold = TRUE)) + 
-  ylab(TeX("Error-Prone Exposure $X_j^*$", bold = TRUE)) + 
+  xlab(TeX("True Exposure $X_p$", bold = TRUE)) + 
+  ylab(TeX("Error-Prone Exposure $X_p^*$", bold = TRUE)) + 
   theme(strip.background = element_rect(fill = "black"), 
         strip.text = element_text(color = "white"), 
         #panel.border = element_rect(color = "black", fill = NA),
