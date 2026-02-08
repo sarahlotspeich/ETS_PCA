@@ -1,8 +1,7 @@
-Sampling on Principal Components to Strategically Validate Error-Prone
-Data While Balancing Multiple Models
+Two-phase validation sampling via principal components to improve efficiency in multi-model estimation from error-prone biomedical databases
 ================
 Sarah C. Lotspeich and Cole Manschot
-9 August 2025
+Last updated: 8 February 2026
 
 ## Setup
 
