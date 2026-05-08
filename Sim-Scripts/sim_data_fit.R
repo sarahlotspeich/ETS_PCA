@@ -77,7 +77,9 @@ sim_data = function(N = 1000, n = 100, beta1 = seq(0.5, 2.5, by = 0.5), cov_X = 
     V = sample_pca(pca_dat = Xstar, ## sample on first PC of X1*, ..., X5*
                    phI = N, ## Phase I sample size
                    phII = n) ## Phase II (validation study) sample size
-    
+    ## Calculate first PC 
+    pc1 = princomp(x = Xstar, 
+                   cor = TRUE)$scores[, 1]
     ## Put data together
     dat = data.frame(Y, X, Z, Xstar, V, pc1)
   } else if (phII == "ETS_X1") {
