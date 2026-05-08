@@ -79,3 +79,84 @@ ggsave(filename = "~/Documents/ETS_PCA/Plots/Compare_ETSX_ETSXstar.png",
        width = 8, 
        height = 5)
 count_df
+
+plot_hist = all |> 
+  mutate(
+    status = case_when(
+      extreme_X1 == 1 & extreme_Xstar1 == 1 ~ "Both", 
+      extreme_X1 == 1 & extreme_Xstar1 == 0 ~ "ETS-X Only", 
+      extreme_X1 == 0 & extreme_Xstar1 == 1 ~ "ETS-X* Only",
+      .default = "Neither"
+    )) |>
+  dplyr::select(status, X1, Xstar1) |> 
+  pivot_longer(cols = X1:Xstar1, names_to = "var", values_to = "val") |> 
+  mutate(var = factor(x = var, 
+                      levels = c("Xstar1", "X1"),
+                      labels = c("Error-Prone Covariate", "Validated Covariate")), 
+         status2 = if_else(condition = status == "Neither", true = "Unvalidated", false = "Validated")) |> 
+  filter(var != "Validated Covariate") |> 
+  ggplot(aes(x = val, fill = status2, alpha = status2)) + 
+  geom_histogram() + 
+  theme_minimal(base_size = 14) + 
+  #facet_wrap(~var) + 
+  scale_fill_manual(values = c("#56b4e9", "#009e73"), 
+                    name = "Validation Status:", 
+                    labels = parse.labels) + 
+  scale_alpha_manual(values = c(0.7, 1), 
+                     name = "Validation Status:", 
+                     labels = parse.labels, 
+                     guide = "none") + 
+  # ggthemes::scale_fill_colorblind(name = "Validation Status by Design:", 
+  #                                  labels = parse.labels) + 
+  xlab("Covariate Value (X)") + 
+  ylab("Number of Patients") + 
+  theme(strip.background = element_rect(fill = "black"), 
+        strip.text = element_text(color = "white"), 
+        axis.title = element_text(face = "bold"),
+        legend.title = element_text(face = "bold"), 
+        #legend.position = "top", 
+        legend.title.align = 0,
+        panel.spacing = unit(1, "lines"), 
+        legend.position = "inside",
+        legend.position.inside = c(0.2,0.8), 
+        legend.background = element_rect(fill = "white", colour = "black")) 
+## Save it 
+plot_hist
+ggsave(filename = "~/Documents/ETS_PCA/Plots/Compare_ETSX_ETSXstar_Histogram.png", 
+       device = "png", 
+       width = 8, 
+       height = 5)
+
+plot_hist_X = temp_long |> 
+  filter(!grepl(pattern = "5", x = Model)) |> 
+  mutate(status2 = if_else(condition = extreme_PCstar1 == 0, 
+                           true = "Unvalidated", 
+                           false = "Validated")) |> 
+  ggplot(aes(x = X, fill = status2, alpha = status2)) + 
+  geom_histogram() + 
+  theme_minimal(base_size = 14) + 
+  facet_wrap(~Model, labeller = label_parsed) + 
+  scale_fill_manual(values = c("#56b4e9", "#009e73"), 
+                    name = "Validation Status:", 
+                    labels = parse.labels) + 
+  scale_alpha_manual(values = c(0.7, 1), 
+                     name = "Validation Status:", 
+                     labels = parse.labels, 
+                     guide = "none") + 
+  xlab("First Principal Component of all Covariates Value (X1,...,Xp)") + 
+  ylab("Number of Patients") + 
+  theme(strip.background = element_rect(fill = "black"), 
+        strip.text = element_text(color = "white"), 
+        axis.title = element_text(face = "bold"),
+        legend.title = element_text(face = "bold"), 
+        legend.title.align = 0,
+        panel.spacing = unit(1, "lines"), 
+        legend.position = "inside",
+        legend.position.inside = c(0.8,0.2), 
+        legend.background = element_rect(fill = "white", colour = "black")) 
+## Save it 
+plot_hist_X
+ggsave(filename = "~/Documents/ETS_PCA/Plots/Compare_ETSPCstar_X_Histogram.png", 
+       device = "png", 
+       width = 8, 
+       height = 5)

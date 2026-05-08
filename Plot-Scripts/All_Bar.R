@@ -3,13 +3,18 @@ source("~/Documents/ETS_PCA/Plot-Scripts/Vary_Error_Variance.R")
 source("~/Documents/ETS_PCA/Plot-Scripts/Vary_Proportion_Validated.R")
 
 # Barbell plot of relative efficiency
-ggpubr::ggarrange(covar_struct_bar_plot, 
-				  error_var_bar_plot, 
-				  val_prop_bar_plot,
-				  nrow = 3, 
-				  ncol = 1, 
-				  common.legend = TRUE, 
-				  labels = c("A)", "B)", "C)"))
+# ggpubr::ggarrange(covar_struct_bar_plot, 
+# 				  error_var_bar_plot, 
+# 				  val_prop_bar_plot,
+# 				  nrow = 3, 
+# 				  ncol = 1, 
+# 				  common.legend = TRUE, 
+# 				  labels = c("A)", "B)", "C)"))
+
+library(patchwork)
+both = (covar_struct_bar_plot / error_var_bar_plot / val_prop_bar_plot) + 
+  plot_annotation(tag_levels = 'A')
+
 ## Save it 
 ggsave(filename = "~/Documents/ETS_PCA/Plots/All_Bar.pdf", 
 	   device = "pdf", 
