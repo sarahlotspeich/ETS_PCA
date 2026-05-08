@@ -121,7 +121,7 @@ sim_data_fit = function(sim_id, N = 1000, n = 100, beta1 = seq(0.5, 2.5, by = 0.
     
     ### Which variables go into the imputation model 
     imp_mod_vars = c(paste0("X", j), paste0("Xstar", j), "Z") #### All include Xj, Xj*, Z
-    if (phII == "ETS_PCA") imp_mod_vars = c(imp_mod_vars, "pc") #### ETS-PCA adds pc 
+    if (phII == "ETS_PCA") imp_mod_vars = c(imp_mod_vars, "pc1") #### ETS-PCA adds pc 
     if (phII == "ETS_X1") imp_mod_vars = unique(c(imp_mod_vars, "Xstar1")) #### ETS-X1 adds X1* 
     if (m > 1) imp_mod_vars = c(imp_mod_vars, paste0("Y", j)) #### Multiple imputation adds Yj
     
