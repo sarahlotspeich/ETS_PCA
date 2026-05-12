@@ -5,7 +5,7 @@ library(ggthemes) ## for colors
 library(dplyr) ## for data wrangling
 
 # Function to parse LaTex labels 
-parse.labels <- function(x) parse(text = x)
+parse.labels = function(x) parse(text = x)
 
 # Function to create boxplot of coefficient estimates
 boxplot_estimates = function(data, col_facet_var, sharedY = FALSE) {

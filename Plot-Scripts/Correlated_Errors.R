@@ -47,3 +47,13 @@ ggsave(plot = error_var_bar_plot,
        device = "pdf", 
        width = 8, 
        height = 5)
+
+library(patchwork)
+both = (error_var_bar_plot / error_var_barbell_plot) + 
+  plot_annotation(tag_levels = 'A')
+## Save it 
+ggsave(plot = both, 
+       filename = "~/Documents/ETS_PCA/Plots/Correlated_Error_Variance_Bar_Barbell.pdf", 
+       device = "pdf", 
+       width = 8, 
+       height = 8)
