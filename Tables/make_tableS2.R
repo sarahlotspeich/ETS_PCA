@@ -4,9 +4,9 @@ library(tidyr) ## for data pivoting
 library(kableExtra) ## for LaTex table
 
 # Load data 
-p = c("https://raw.githubusercontent.com/sarahlotspeich/ETS_PCA/refs/heads/main/Sim-Data/correlated_errors_10_11422.csv", 
-      "https://raw.githubusercontent.com/sarahlotspeich/ETS_PCA/refs/heads/main/Sim-Data/correlated_errors_2.5_11422.csv", 
-      "https://raw.githubusercontent.com/sarahlotspeich/ETS_PCA/refs/heads/main/Sim-Data/correlated_errors_5_11422.csv")
+p = c("https://raw.githubusercontent.com/sarahlotspeich/ETS_PCA/refs/heads/main/Sim-Data/val_errors_10_11422.csv", 
+      "https://raw.githubusercontent.com/sarahlotspeich/ETS_PCA/refs/heads/main/Sim-Data/val_errors_2.5_11422.csv", 
+      "https://raw.githubusercontent.com/sarahlotspeich/ETS_PCA/refs/heads/main/Sim-Data/val_errors_5_11422.csv")
 tab_dat = do.call(bind_rows, 
                   lapply(X = paste0(p, list.files(p)), 
                          FUN = read.csv)) |> 
