@@ -48,3 +48,11 @@ ggsave(plot = covar_struct_bar_plot,
        device = "pdf", 
        width = 8, 
        height = 5)
+
+# Print sum of variances (to reference in text)
+plot_dat |> 
+  group_by(Model, Design, Covar) |> 
+  mutate(var_beta = var(est_beta1)) |> 
+  group_by(Design, Covar) |> 
+  summarize(sum_var_beta = sum(var_beta)) |> 
+  arrange(Covar)

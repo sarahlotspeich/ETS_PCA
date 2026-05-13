@@ -33,33 +33,33 @@ ggsave(filename = "~/Documents/ETS_PCA/Plots/SharedY.pdf",
        height = 10)
 
 # Barbell plot of relative efficiency
-barbell = plot_dat |> 
+barbell_sharedY = plot_dat |> 
   barbell_efficiency(group_by_var = beta_sett, sharedY = TRUE) + 
   facet_grid(cols = vars(beta_sett), 
              scales = "free", 
              labeller = labeller(beta_sett = label_parsed))
 ## Save it 
-ggsave(plot = barbell, 
+ggsave(plot = barbell_sharedY, 
        filename = "~/Documents/ETS_PCA/Plots/SharedY_Barbell.pdf", 
        device = "pdf", 
        width = 8, 
        height = 5)
 
 # Bar plot of sum of variances
-bar = plot_dat |> 
+bar_sharedY = plot_dat |> 
   bar_sum_var(group_by_var = beta_sett, sharedY = TRUE)
 ## Save it 
-ggsave(plot = bar, 
+ggsave(plot = bar_sharedY, 
        filename = "~/Documents/ETS_PCA/Plots/sharedY_Bar.pdf", 
        device = "pdf", 
        width = 8, 
        height = 5)
 
 library(patchwork)
-both = (bar / barbell) + 
+both_sharedY = (bar_sharedY / barbell_sharedY) + 
   plot_annotation(tag_levels = 'A')
 ## Save it 
-ggsave(plot = both, 
+ggsave(plot = both_sharedY, 
        filename = "~/Documents/ETS_PCA/Plots/sharedY_Bar_Barbell.pdf", 
        device = "pdf", 
        width = 8, 

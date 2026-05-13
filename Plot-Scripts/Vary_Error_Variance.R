@@ -47,3 +47,11 @@ ggsave(plot = error_var_bar_plot,
        device = "pdf", 
        width = 8, 
        height = 5)
+
+# Print sum of variances (to reference in text)
+plot_dat |> 
+  group_by(Model, Design, ErrorVar) |> 
+  mutate(var_beta = var(est_beta1)) |> 
+  group_by(Design, ErrorVar) |> 
+  summarize(sum_var_beta = sum(var_beta)) |> 
+  arrange(ErrorVar)
