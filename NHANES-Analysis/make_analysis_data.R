@@ -41,7 +41,7 @@ demos = left_join(x = nhanes,
                   by = join_by(SEQN==SEQN))
 
 # Define useFlag based on complete data for Y, X, and Z 
-demos[,"useFlag"] = ifelse(test = rowSums(is.na(demos[c(2:11, 14:15, 17, 24)])) == 0, 
+demos[,"useFlag"] = ifelse(test = rowSums(is.na(demos[c(2:11, 14:15)])) == 0, ## Removed: 17, 24 (race, education)
                            yes = "Y",
                            no = "N")
 
@@ -51,17 +51,16 @@ analysis_data = demos |>
   dplyr::select(-useFlag)
 
 # Rename columns to match notation in paper
-colnames(analysis_data)[2:11] = c(paste0("Y", 1:5), paste0("Xstar", 1:5))
+colnames(analysis_data)[2:11] = c(paste0("Y", 1:5), paste0("XSTAR", 1:5))
 
 ## Save data 
 analysis_data |> 
-  write.csv("NHANES-Analysis/analysis_data_orig.csv", 
+  write.csv("~/Documents/ETS_PCA/NHANES-Analysis/analysis_data_orig.csv", 
             row.names = FALSE)
 
 # //////////////////////////////////////////////////////////////////////////////
-# Add simulated covariate measurement error ////////////////////////////////////
+# Simulate error-free continuous covariates Xj|Xj* /////////////////////////////
 # //////////////////////////////////////////////////////////////////////////////
-## Simulate error-prone continuous covariates Xj*|Xj
 ### For reproducibility 
 set.seed(918) 
 ### Simulate random errors (with variance relative to the variance of X*s)
@@ -84,6 +83,8 @@ analysis_data = analysis_data |>
 ## Save data 
 ## Convert factor covariates, subset to necessary columns
 analysis_data |> 
-  dplyr::select(SEQN, Y1:X5, XSTAR1:XSTAR5, RIAGENDR, RIDAGEYR, RIDRETH1, DMDEDUC2)  |>
+  dplyr::select(SEQN, Y1:X5, XSTAR1:XSTAR5, RIAGENDR, RIDAGEYR)  |> ## , RIDRETH1, DMDEDUC2
   write.csv("~/Documents/ETS_PCA/NHANES-Analysis/analysis_data_with_errors.csv", 
             row.names = FALSE)
+analysis_data |> 
+  nrow() ### n = 2689 complete cases 
