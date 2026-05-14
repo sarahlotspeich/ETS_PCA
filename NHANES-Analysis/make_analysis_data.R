@@ -51,7 +51,7 @@ analysis_data = demos |>
   dplyr::select(-useFlag)
 
 # Rename columns to match notation in paper
-colnames(analysis_data)[2:11] = c(paste0("Y", 1:5), paste0("X", 1:5))
+colnames(analysis_data)[2:11] = c(paste0("Y", 1:5), paste0("Xstar", 1:5))
 
 ## Save data 
 analysis_data |> 
@@ -64,23 +64,26 @@ analysis_data |>
 ## Simulate error-prone continuous covariates Xj*|Xj
 ### For reproducibility 
 set.seed(918) 
-### Simulate random errors (with variance relative to the variance of Xs)
-varXs = as.numeric(apply(X = analysis_data[, c("X1", "X2", "X3", "X4", "X5")], ### calculate Var(X1), ..., Var(X5)
-                         MARGIN = 2, 
-                         FUN = var))
+### Simulate random errors (with variance relative to the variance of X*s)
+varXstars = as.numeric(
+  apply(X = analysis_data[, c("XSTAR1", "XSTAR2", "XSTAR3", "XSTAR4", "XSTAR5")], ### calculate Var(X1), ..., Var(X5)
+        MARGIN = 2, 
+        FUN = var)
+  )
 U = mvrnorm(n = nrow(analysis_data), 
             mu = rep(0, 5), ### mean vector
-            Sigma = diag(varXs / 4, ### variance-covariance matrix
+            Sigma = diag(varXstars / 4, ### variance-covariance matrix
                          nrow = 5)) ### assuming independent errors with Var(Uj) = Var(Xj) / 4
-### Add random errors to covariates to create error-prone covariates 
-Xstar = analysis_data[, paste0("X", 1:5)] + U 
-colnames(Xstar) = paste0("Xstar", 1:5)
+### Subtract random errors to covariates to create error-free covariates 
+#### X* = X + U --> X = X* - U 
+X = analysis_data[, paste0("XSTAR", 1:5)] - U 
+colnames(X) = paste0("X", 1:5)
 analysis_data = analysis_data |> 
-  bind_cols(Xstar)
+  bind_cols(X)
 
 ## Save data 
 ## Convert factor covariates, subset to necessary columns
 analysis_data |> 
-  dplyr::select(SEQN, Y1:X5, Xstar1:Xstar5, RIAGENDR, RIDAGEYR, RIDRETH1, DMDEDUC2)  |>
-  write.csv("NHANES-Analysis/analysis_data_with_errors.csv", 
+  dplyr::select(SEQN, Y1:X5, XSTAR1:XSTAR5, RIAGENDR, RIDAGEYR, RIDRETH1, DMDEDUC2)  |>
+  write.csv("~/Documents/ETS_PCA/NHANES-Analysis/analysis_data_with_errors.csv", 
             row.names = FALSE)
