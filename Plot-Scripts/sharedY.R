@@ -14,9 +14,9 @@ devtools::source_url("https://raw.githubusercontent.com/sarahlotspeich/ETS_PCA/r
 plot_dat = plot_dat |> 
   dplyr::mutate(beta_sett = factor(x = beta_sett, 
                                    levels = c(1, 2, 3), 
-                                   labels = c(TeX("Only $X_1$"), 
-                                              TeX("Only $X_2$"), 
-                                              TeX("All $X_1,...,X_5$"))))
+                                   labels = c(latex2exp::TeX("Only $X_1$"), 
+                                              latex2exp::TeX("Only $X_2$"), 
+                                              latex2exp::TeX("All $X_1,...,X_5$"))))
 
 # Boxplot of coefficient estimates
 plot_dat |> 
@@ -64,3 +64,11 @@ ggsave(plot = both_sharedY,
        device = "pdf", 
        width = 8, 
        height = 8)
+
+# Print sum of variances (to reference in text)
+plot_dat |> 
+  group_by(Model, Design, beta_sett) |> 
+  mutate(var_beta = var(est_beta1)) |> 
+  group_by(Design, beta_sett) |> 
+  summarize(sum_var_beta = sum(var_beta)) |> 
+  arrange(beta_sett)
