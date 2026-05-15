@@ -41,7 +41,7 @@ demos = left_join(x = nhanes,
                   by = join_by(SEQN==SEQN))
 
 # Define useFlag based on complete data for Y, X, and Z 
-demos[,"useFlag"] = ifelse(test = rowSums(is.na(demos[c(2:11, 14:15)])) == 0, ## Removed: 17, 24 (race, education)
+demos[,"useFlag"] = ifelse(test = rowSums(is.na(demos[c(2:11, 14:15, 17, 24)])) == 0, 
                            yes = "Y",
                            no = "N")
 
@@ -83,7 +83,8 @@ analysis_data = analysis_data |>
 ## Save data 
 ## Convert factor covariates, subset to necessary columns
 analysis_data |> 
-  dplyr::select(SEQN, Y1:X5, XSTAR1:XSTAR5, RIAGENDR, RIDAGEYR)  |> ## , RIDRETH1, DMDEDUC2
+  dplyr::select(SEQN, Y1:X5, XSTAR1:XSTAR5, 
+                RIAGENDR, RIDAGEYR, RIDRETH1, DMDEDUC2)  |> 
   write.csv("~/Documents/ETS_PCA/NHANES-Analysis/analysis_data_with_errors.csv", 
             row.names = FALSE)
 analysis_data |> 
