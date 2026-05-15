@@ -29,7 +29,6 @@ Examination Survey
 
 ``` r
 ## Read in data from GitHub
-### See make_nhanes_data.R for more about dataset curation
 nhanes_data = read.csv("https://raw.githubusercontent.com/sarahlotspeich/ETS_PCA/refs/heads/main/NHANES-Analysis/analysis_data_orig.csv")
 
 ## Convert factor exposures, subset to necessary columns
@@ -38,19 +37,19 @@ nhanes_data = nhanes_data |>
                            levels = c(1, 2), 
                            labels = c("Male", "Female")), 
          RIDRETH1 = factor(x = RIDRETH1, 
-                           levels = c(1, 2, 3, 4, 5), 
-                           labels = c("Mexican American", 
+                           levels = c(3, 1, 2, 4, 5), 
+                           labels = c("Non-Hispanic White", 
+                                      "Mexican American", 
                                       "Other Hispanic", 
-                                      "Non-Hispanic White", 
                                       "Non-Hispanic Black", 
                                       "Other Race (Including Multi-Racial)")), 
          DMDEDUC2 = factor(x = DMDEDUC2, 
-                           levels = c(1, 2, 3, 4, 5), 
-                           labels = c("< 9th Grade", 
+                           levels = c(5, 1, 2, 3, 4), 
+                           labels = c("College Graduate or Above", 
+                                      "< 9th Grade", 
                                       "9-11th Grade", 
                                       "High School Grad/GED or Equivalent",
-                                      "Some College or AA Degree", 
-                                      "College Graduate or Above"))) |> 
+                                      "Some College or AA Degree"))) |> 
   dplyr::select(SEQN, Y1:XSTAR5, RIAGENDR, RIDAGEYR, RIDRETH1, DMDEDUC2)  
 
 ## Define vector of additional (error-free) exposures
