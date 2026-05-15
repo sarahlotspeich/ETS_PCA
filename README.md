@@ -49,8 +49,7 @@ nhanes_data = nhanes_data |>
                                       "< 9th Grade", 
                                       "9-11th Grade", 
                                       "High School Grad/GED or Equivalent",
-                                      "Some College or AA Degree")), 
-         RIDAGEYR = RIDAGEYR / 10) |> ## rescale age to 10-year increments
+                                      "Some College or AA Degree"))) |> 
   dplyr::select(SEQN, Y1:XSTAR5, RIAGENDR, RIDAGEYR, RIDRETH1, DMDEDUC2)  
 
 ## Define vector of additional (error-free) exposures
@@ -118,61 +117,35 @@ can be found in this repository as
 
 ## Descriptive Statistics
 
+### Error-Prone Versus Error-Free Exposures
+
 <img src="README_files/figure-gfm/unnamed-chunk-3-1.png" alt=""  />
 
-``` r
-## Estimate covariance of X* variables
-cov(nhanes_data[, paste0("XSTAR", 1:5)]) 
-```
+### Correlation Matrix Between Error-Prone Exposures
 
-    ##              XSTAR1     XSTAR2     XSTAR3    XSTAR4     XSTAR5
-    ## XSTAR1 311220.62986 10222.4015 5508.79197  86.62312 30146.7031
-    ## XSTAR2  10222.40152 30523.5473  479.53636 137.98007  2356.5188
-    ## XSTAR3   5508.79197   479.5364  281.98449  25.36496   805.3598
-    ## XSTAR4     86.62312   137.9801   25.36496 476.47932   451.9767
-    ## XSTAR5  30146.70310  2356.5188  805.35976 451.97665 19967.5159
+<img src="README_files/figure-gfm/corrplot X*-1.png" alt=""  />
+
+### Principal Components Analysis of Error-Prone Exposures
 
 ``` r
-cor_matrix = cor(nhanes_data[, paste0("XSTAR", 1:5)])
-
-library(ggcorrplot)
-plot_corr = ggcorrplot(cor_matrix,
-           lab = TRUE,          # adds correlation coefficients
-           colors = c("#E69F00", "white", "#56B4E9")) + # orange - white - blue
-  scale_x_discrete(labels = c(TeX("$X_1^*$ (Calcium)"),
-                              TeX("$X_2^*$ (Caffeine)"),
-                              TeX("$X_3^*$ (Saturated Fat)"),
-                              TeX("$X_4^*$ (Alcohol)"),
-                              TeX("$X_5^*$ (Food Folate)"))) +
-  scale_y_discrete(labels = c(TeX("$X_1^*$  (Calcium)"),
-                              TeX("$X_2^*$ (Caffeine)"),
-                              TeX("$X_3^*$ (Saturated Fat)"),
-                              TeX("$X_4^*$ (Alcohol)"),
-                              TeX("$X_5^*$ (Food Folate)"))) +
-  theme_minimal(base_size = 14) + 
-  xlab("Error-Prone Nutrient Intake Exposure Value") + 
-  ylab("Error-Prone Nutrient Intake Exposure Value") + 
-  theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 10),
-      axis.text.y = element_text(size = 10))
+## Inspect numeric summaries X* variables (different scales/variability)
+summary(nhanes_data[, paste0("XSTAR", 1:5)]) 
 ```
 
-    ## Warning: `aes_string()` was deprecated in ggplot2 3.0.0.
-    ## ℹ Please use tidy evaluation idioms with `aes()`.
-    ## ℹ See also `vignette("ggplot2-in-packages")` for more information.
-    ## ℹ The deprecated feature was likely used in the ggcorrplot package.
-    ##   Please report the issue at <https://github.com/kassambara/ggcorrplot/issues>.
-    ## This warning is displayed once per session.
-    ## Call `lifecycle::last_lifecycle_warnings()` to see where this warning was
-    ## generated.
-
-``` r
-## Save 
-ggsave(filename = "~/Documents/ETS_PCA/NHANES-Analysis/Xstar-Correlation.png", 
-       plot = plot_corr, 
-       device = "png", 
-       width = 8, 
-       height = 8)
-```
+    ##      XSTAR1           XSTAR2           XSTAR3           XSTAR4       
+    ##  Min.   :   0.0   Min.   :   0.0   Min.   :  0.00   Min.   :  0.000  
+    ##  1st Qu.: 518.0   1st Qu.:  33.0   1st Qu.: 15.48   1st Qu.:  0.000  
+    ##  Median : 769.0   Median : 120.0   Median : 23.58   Median :  0.000  
+    ##  Mean   : 885.7   Mean   : 156.2   Mean   : 26.62   Mean   :  7.717  
+    ##  3rd Qu.:1128.0   3rd Qu.: 210.0   3rd Qu.: 33.93   3rd Qu.:  0.000  
+    ##  Max.   :9266.0   Max.   :1920.0   Max.   :208.84   Max.   :448.100  
+    ##      XSTAR5      
+    ##  Min.   :   0.0  
+    ##  1st Qu.: 124.0  
+    ##  Median : 184.0  
+    ##  Mean   : 213.9  
+    ##  3rd Qu.: 267.0  
+    ##  Max.   :2064.0
 
 ``` r
 ## Fit PCA on X* variables (using correlation matrix)
@@ -188,76 +161,24 @@ summary(pc)
     ## Cumulative Proportion  0.389586 0.5931921 0.7842762 0.9197112 1.00000000
 
 ``` r
-### Print PCA loadings 
-pc$loadings
-```
-
-    ## 
-    ## Loadings:
-    ##        Comp.1 Comp.2 Comp.3 Comp.4 Comp.5
-    ## XSTAR1  0.589  0.240  0.148  0.234  0.721
-    ## XSTAR2  0.221        -0.966              
-    ## XSTAR3  0.589  0.149         0.418 -0.674
-    ## XSTAR4  0.132 -0.939         0.288       
-    ## XSTAR5  0.491 -0.177  0.184 -0.825 -0.112
-    ## 
-    ##                Comp.1 Comp.2 Comp.3 Comp.4 Comp.5
-    ## SS loadings       1.0    1.0    1.0    1.0    1.0
-    ## Proportion Var    0.2    0.2    0.2    0.2    0.2
-    ## Cumulative Var    0.2    0.4    0.6    0.8    1.0
-
-``` r
 ### Extract the first principal component
 nhanes_data$pc1 = pc$scores[, 1] 
-### Plot score vs. X* and Y
-plot_loadings = nhanes_data |> 
-  dplyr::select(pc1, Y1:Y5, XSTAR1:XSTAR5) |> 
-  pivot_longer(cols = Y1:XSTAR5, names_to = "Variable", values_to = "Value") |>
-  mutate(Model = sub("Y|XSTAR", "", Variable), 
-         Variable = paste0(sub(pattern = "XSTAR", 
-                               replacement = "$X^*_", 
-                               x = sub(pattern = "Y", 
-                                       replacement = "$Y_", 
-                                       x = "XSTAR1")), "$"), 
-         Variable = factor(x = Variable, 
-                           levels = c(paste0("$Y_", 1:5, "$"), 
-                                      paste0("$X^*_", 1:5, "$")), 
-                           labels = TeX(c(paste0("$Y_", 1:5, "$"), 
-                                      paste0("$X^*_", 1:5, "$")))), 
-         ) |> 
-  ggplot(aes(x = pc1, y = Value, color = Model)) + 
-  geom_point() + 
-  ggthemes::scale_color_colorblind(guide = "none") + 
-  facet_wrap(~Variable, 
-             ncol = 5, 
-             labeller = label_parsed) + 
-  theme_minimal(base_size = 14) + 
-  theme(strip.background = element_rect(fill = "black"), 
-        strip.text = element_text(color = "white"), 
-        legend.title = element_text(face = "bold"), 
-        legend.position = "top", 
-        axis.text.x = element_blank(), 
-        axis.title.x = element_blank())
-# Save it 
-plot_loadings
 ```
 
-<img src="README_files/figure-gfm/PCA-1.png" alt=""  />
+### Scree Plot
 
-``` r
-ggsave(filename = "~/Documents/ETS_PCA/NHANES-Analysis/PCA-Loadings.png", 
-       plot = plot_covar, 
-       device = "png", 
-       width = 10, 
-       height = 6)
-```
+<img src="README_files/figure-gfm/unnamed-chunk-5-1.png" alt=""  />
+
+### Loadings Plot
+
+<img src="README_files/figure-gfm/unnamed-chunk-6-1.png" alt=""  />
 
 ## Fitting the Models Under Different Partial Validation Designs
 
 For the data application in the manuscript, we fit each of the five
 models of interest assuming that only $n = 250$ of the $N =$ 2388
 individuals had validated exposure information $X_1, \dots, X_5$
-measured. For the other \$N - n = \$ 2138 individuals, $X_1, \dots, X_5$
+measured. For the other $N - n =$ 2138 individuals, $X_1, \dots, X_5$
 are missing and must be multiply imputed to fit the models.
 
 ``` r
@@ -416,20 +337,6 @@ for (j in 1:5) {
 
 ## Results
 
-<img src="README_files/figure-gfm/unnamed-chunk-6-1.png" alt=""  />
+<img src="README_files/figure-gfm/unnamed-chunk-10-1.png" alt=""  />
 
-<img src="README_files/figure-gfm/unnamed-chunk-7-1.png" alt=""  />
-
-<img src="README_files/figure-gfm/unnamed-chunk-8-1.png" alt=""  />
-
-``` r
-library(patchwork)
-both = (plot_coeff / plot_ciwidth) + 
-  plot_annotation(tag_levels = 'A')
-## Save it 
-ggsave(plot = both, 
-       filename = "~/Documents/ETS_PCA/NHANES-Analysis/nhanes_forest_bar.pdf", 
-       device = "pdf", 
-       width = 12, 
-       height = 10)
-```
+<img src="README_files/figure-gfm/unnamed-chunk-12-1.png" alt=""  />
