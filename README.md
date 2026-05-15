@@ -427,6 +427,6 @@ both = (plot_coeff / plot_ciwidth) +
 ggsave(plot = both, 
        filename = "~/Documents/ETS_PCA/NHANES-Analysis/nhanes_forest_bar.pdf", 
        device = "pdf", 
-       width = 10, 
+       width = 12, 
        height = 10)
 ```

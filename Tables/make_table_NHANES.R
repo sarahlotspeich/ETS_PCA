@@ -13,10 +13,10 @@ fits |>
          est_ci = paste0("$", round(estimate, 2), "$ ($", round(lb, 2), "$, $", round(ub, 2), "$)"), 
          term_grouped = if_else(condition = grepl(pattern = "X", x = term), true = "Nutrient Intake", false = term), 
          design = factor(x = design, 
-                         levels = c("GS", "SRS", "ETS (X1*)", "ETS (PC1*)"), 
-                         labels = c("Gold Standard", "SRS", "ETS-$X_1^*$", "ETS-$PC_1^*$"))) |> 
+                         levels = c("SRS", "ETS (X1*)", "ETS (PC1*)"), 
+                         labels = c("SRS", "ETS-$X_1^*$", "ETS-$PC_1^*$"))) |> 
   dplyr::select(model, design, term_grouped, est_ci) |> 
-  pivot_wider(names_from = term_grouped, values_from = est_ci) |> 
+  pivot_wider(names_from = design, values_from = est_ci) |> 
   arrange(model) |> 
   dplyr::select(-model) |>
   kable(format = "latex", booktabs = TRUE, escape = FALSE, align = "lcccccccccccc") |> 
