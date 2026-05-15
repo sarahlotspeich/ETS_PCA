@@ -49,7 +49,8 @@ nhanes_data = nhanes_data |>
                                       "< 9th Grade", 
                                       "9-11th Grade", 
                                       "High School Grad/GED or Equivalent",
-                                      "Some College or AA Degree"))) |> 
+                                      "Some College or AA Degree")), 
+         RIDAGEYR = RIDAGEYR / 10) |> ## rescale age to 10-year increments
   dplyr::select(SEQN, Y1:XSTAR5, RIAGENDR, RIDAGEYR, RIDRETH1, DMDEDUC2)  
 
 ## Define vector of additional (error-free) exposures
@@ -414,6 +415,8 @@ for (j in 1:5) {
 ```
 
 ## Results
+
+<img src="README_files/figure-gfm/unnamed-chunk-6-1.png" alt=""  />
 
 <img src="README_files/figure-gfm/unnamed-chunk-7-1.png" alt=""  />
 

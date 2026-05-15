@@ -23,8 +23,8 @@ fits |>
   kable_styling() |> 
   add_header_above(header = c(" " = 5, "Race and Ethnicity" = 4, "Education Level" = 4), bold = TRUE) |> 
   row_spec(row = 0, bold = TRUE) |>
-  group_rows(group_label = "Model 1", start_row = 1, end_row = 4, italic = TRUE, bold = FALSE) |> 
-  group_rows(group_label = "Model 2", start_row = 5, end_row = 8, italic = TRUE, bold = FALSE) |>
-  group_rows(group_label = "Model 3", start_row = 9, end_row = 12, italic = TRUE, bold = FALSE) |>
-  group_rows(group_label = "Model 4", start_row = 13, end_row = 16, italic = TRUE, bold = FALSE) |>
-  group_rows(group_label = "Model 5", start_row = 17, end_row = 20, italic = TRUE, bold = FALSE)
+  group_rows(group_label = "Model 1", start_row = 1, end_row = 12, italic = TRUE, bold = FALSE) |> 
+  group_rows(group_label = "Model 2", start_row = 13, end_row = 24, italic = TRUE, bold = FALSE) |>
+  group_rows(group_label = "Model 3", start_row = 25, end_row = 36, italic = TRUE, bold = FALSE) |>
+  group_rows(group_label = "Model 4", start_row = 37, end_row = 48, italic = TRUE, bold = FALSE) |>
+  group_rows(group_label = "Model 5", start_row = 49, end_row = 60, italic = TRUE, bold = FALSE)
