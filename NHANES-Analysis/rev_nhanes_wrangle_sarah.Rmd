@@ -1,0 +1,400 @@
+---
+title: "NHANES Application"
+author: "Cole Manschot"
+date: "2025-07-15"
+output:
+  html_document:
+    toc: true           # Enable table of contents
+    toc_float: true     # Make TOC float (sticky sidebar)
+    toc_depth: 3        # Depth of headers included in TOC
+    theme: paper       # Optional: Bootstrap theme for nicer style
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warnings = FALSE)
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+library(mice)
+```
+
+## Models 
+
+We will consider five models for the data application. 
+These are motivated by connecting dietary measures to outcomes that relate to clinically relevant outcomes and deficiencies. 
+
+The models considered are as follows: 
+
+| Outcome | Covariate | Clinical Relevance |
+|---|---|---|
+| Vitamin D | Calcium Intake | Vitamin D facilitates calcium absorption |
+| Resting Heart Rate | Caffeine Intake | Caffeine can affect the heart rate and cardiovascular function |
+| HDL Cholesterol | Saturated Fat Intake | HDL cholesterol is associated cardiovascular disease and saturated fat is influenced HDL levels |
+| Insulin | Alcohol Consumption | Insulin resistance is associated with numerous co-morbidities and alcohol may impact insulin sensitivity | 
+| Folate | Folate Food | Low levels of iron contribute to anemia risk and is related to iron intake | 
+
+These five models relate relevant health outcomes to dietary factors which individuals may have some level of control over. 
+However, accurate measurements of dietary intake are often confounded by recall bias and measurement error from mapping foods and proportions to nutrient intake. 
+
+## NHANES Data
+
+These models allow us to use three data sets from the NHANES (and one additional data set for demographic information). 
+This simplifies the data application and makes it more easily reproducible. 
+
+```{r}
+analysis_data = read.csv("~/Documents/ETS_PCA/NHANES-Analysis/analysis_data_with_errors.csv")
+```
+
+## Visualize Error-Prone (Observed) vs. Error-Free (Simulated)
+
+```{r}
+plot_data = analysis_data |> 
+  select(SEQN, X1:X5) |> 
+  pivot_longer(cols = X1:X5, names_to = "Model", values_to = "ValX") |> 
+  mutate(Model = sub(pattern = "X", replacement = "", x = Model)) |>
+  left_join(
+    analysis_data |> 
+      select(SEQN, XSTAR1:XSTAR5) |> 
+      pivot_longer(cols = XSTAR1:XSTAR5, 
+                   names_to = "Model", 
+                   values_to = "UnvalX") |> 
+      mutate(Model = sub(pattern = "XSTAR", 
+                         replacement = "", 
+                         x = Model))
+  )
+
+plot_data |> 
+  ggplot(aes(x = UnvalX, y = ValX)) + 
+  geom_point() + 
+  geom_smooth(method = "lm", se = FALSE) + 
+  theme_minimal() + 
+  facet_wrap(~Model, scales = "free")
+```
+
+### Simulate different validation study designs 
+
+```{r}
+## Convert factor covariates, subset to necessary columns
+analysis_data = analysis_data |> 
+  mutate(RIDRETH1 = as.factor(RIDRETH1), 
+         DMDEDUC2 = as.factor(DMDEDUC2)) |> 
+  select(Y1:X5, XSTAR1:XSTAR5, RIAGENDR, RIDAGEYR, RIDRETH1, DMDEDUC2)  
+Z = c("RIAGENDR", "RIDAGEYR") # , "RIDRETH1", "DMDEDUC2")
+
+## Initialize dataframe to hold estimates from the 5 models
+fits = data.frame()
+
+## Set validation study size
+n = 250
+```
+
+```{r srs}
+## For reproducibility 
+set.seed(918)
+
+## Simple random sampling 
+V_srs = auditDesignR::sample_srs(phI = nrow(analysis_data), 
+                                 phII = n)
+des_srs = analysis_data |> 
+  bind_cols(data.frame(V = V_srs)) |> 
+  mutate(X1 = ifelse(test = V == 1, yes = X1, no = NA), 
+         X2 = ifelse(test = V == 1, yes = X2, no = NA), 
+         X3 = ifelse(test = V == 1, yes = X3, no = NA), 
+         X4 = ifelse(test = V == 1, yes = X4, no = NA), 
+         X5 = ifelse(test = V == 1, yes = X5, no = NA))
+
+## Loop over j = 1, ..., 5 to impute and fit each model
+for (j in 1:5) {
+  ### Imputation model depends on the validation study design and number of imputations
+  ### Which variables go into the imputation model 
+  imp_mod_vars = c(paste0("X", j), paste0("XSTAR", j), Z) #### All include Xj, Xj*, Z
+  imp_mod_vars = c(imp_mod_vars, paste0("Y", j)) #### Multiple imputation adds Yj
+  
+  ### Impute and fit model 
+  #### Multiple imputation
+  mice_dat = mice(m = 75,
+                  data = des_srs[, imp_mod_vars], 
+                  method = "norm",
+                  printFlag = FALSE)
+  
+  #### Fit analysis model to the imputed data (separately) 
+  after_imp_fit = with(data = mice_dat, 
+                       expr = glm(formula = as.formula(paste0("Y", j, "~", "X", j, "+", paste(Z, collapse = "+"))), 
+                                  family = "gaussian"))
+  
+  #### Pool the analysis models from each imputation
+  pool_imp_fit = summary(pool(after_imp_fit))
+  
+  #### Save coefficient estimates
+  fits = fits |> 
+    bind_rows(data.frame(cbind(model = j, design = "SRS", pool_imp_fit)))
+}
+```
+
+```{r ETS(X1*)}
+## ETS on X1*
+justXSTAR1 = data.frame(row_num = 1:nrow(analysis_data), 
+                        XSTAR1 = analysis_data$XSTAR1) 
+    
+## Order ascendingly by X*1
+justXSTAR1 = justXSTAR1[order(justXSTAR1$XSTAR1, decreasing = FALSE), ]
+### Only validate smallest n/2 X*1
+smallest_XSTAR1 = justXSTAR1$row_num[1:(250 / 2)]
+
+## Re-order descendingly by first principal component
+justXSTAR1 = justXSTAR1[order(justXSTAR1$XSTAR1, decreasing = TRUE), ]
+### Only validate smallest n/2 residuals
+largest_XSTAR1 = justXSTAR1$row_num[1:(250 / 2)]
+
+## Define validation indicator
+V_etsXSTAR1 = c(smallest_XSTAR1, largest_XSTAR1)
+des_etsXSTAR1 = analysis_data |> 
+  bind_cols(data.frame(V = 1:nrow(analysis_data) %in% V_etsXSTAR1)) |> 
+  mutate(X1 = ifelse(test = V == 1, yes = X1, no = NA), 
+         X2 = ifelse(test = V == 1, yes = X2, no = NA), 
+         X3 = ifelse(test = V == 1, yes = X3, no = NA), 
+         X4 = ifelse(test = V == 1, yes = X4, no = NA), 
+         X5 = ifelse(test = V == 1, yes = X5, no = NA))
+
+## Loop over j = 1, ..., 5 to impute and fit each model
+for (j in 1:5) {
+  ### Imputation model depends on the validation study design and number of imputations
+  ### Which variables go into the imputation model 
+  imp_mod_vars = c(paste0("X", j), paste0("XSTAR", j), Z) #### All include Xj, Xj*, Z
+  imp_mod_vars = unique(c(imp_mod_vars, "XSTAR1")) #### ETS-X1 adds X1* 
+  imp_mod_vars = c(imp_mod_vars, paste0("Y", j)) #### Multiple imputation adds Yj
+  
+  ### Impute and fit model 
+  #### Multiple imputation
+  mice_dat = mice(m = 75,
+                  data = des_etsXSTAR1[, imp_mod_vars], 
+                  method = "norm",
+                  printFlag = FALSE)
+  
+  #### Fit analysis model to the imputed data (separately) 
+  after_imp_fit = with(data = mice_dat, 
+                       expr = glm(formula = as.formula(paste0("Y", j, "~", "X", j, "+", paste(Z, collapse = "+"))), 
+                                  family = "gaussian"))
+  
+  #### Pool the analysis models from each imputation
+  pool_imp_fit = summary(pool(after_imp_fit))
+  
+  #### Save coefficient estimates
+  fits = fits |> 
+    bind_rows(data.frame(cbind(model = j, design = "ETS (X1*)", pool_imp_fit)))
+}
+```
+
+```{r ETS(PC1*)}
+## ETS on PC1*
+pc = analysis_data |> 
+  dplyr::select(XSTAR1:XSTAR5) |> 
+  princomp(cor = TRUE) ### use correlation, since Xs are on different scales
+pc1 = data.frame(row_num = 1:nrow(analysis_data), 
+                 pc = pc$scores[, 1]) ## extract the first principal component
+
+## Order ascendingly by first principal component
+pc1 = pc1[order(pc1$pc, decreasing = FALSE), ]
+### Only validate smallest n/2 principal components
+smallest_pc1 = pc1$row_num[1:(250 / 2)]
+
+## Re-order descendingly by first principal component
+pc1 = pc1[order(pc1$pc, decreasing = TRUE), ]
+### Only validate smallest n/2 residuals
+largest_pc1 = pc1$row_num[1:(250 / 2)]
+
+## Define validation indicator
+V_etsPCstar1 = c(smallest_pc1, largest_pc1)
+des_etsPCstar1 = analysis_data |> 
+  bind_cols(data.frame(V = 1:nrow(analysis_data) %in% V_etsPCstar1)) |> 
+  mutate(X1 = ifelse(test = V == 1, yes = X1, no = NA), 
+         X2 = ifelse(test = V == 1, yes = X2, no = NA), 
+         X3 = ifelse(test = V == 1, yes = X3, no = NA), 
+         X4 = ifelse(test = V == 1, yes = X4, no = NA), 
+         X5 = ifelse(test = V == 1, yes = X5, no = NA))
+
+## Re-order by row number to merge into data
+des_etsPCstar1$pc1 = as.numeric(pc1[order(pc1$row_num, decreasing = FALSE), 2])
+
+## Loop over j = 1, ..., 5 to impute and fit each model
+for (j in 1:5) {
+  ### Imputation model depends on the validation study design and number of imputations
+  ### Which variables go into the imputation model 
+  imp_mod_vars = c(paste0("X", j), paste0("XSTAR", j), Z) #### All include Xj, Xj*, Z
+  imp_mod_vars = c(imp_mod_vars, "pc1") #### ETS-PCA adds pc 
+  imp_mod_vars = c(imp_mod_vars, paste0("Y", j)) #### Multiple imputation adds Yj
+  
+  ### Impute and fit model 
+  #### Multiple imputation
+  mice_dat = mice(m = 75,
+                  data = des_etsPCstar1[, imp_mod_vars], 
+                  method = "norm",
+                  printFlag = FALSE)
+  
+  #### Fit analysis model to the imputed data (separately) 
+  after_imp_fit = with(data = mice_dat, 
+                       expr = glm(formula = as.formula(paste0("Y", j, "~", "X", j, "+", paste(Z, collapse = "+"))), 
+                                  family = "gaussian"))
+  
+  #### Pool the analysis models from each imputation
+  pool_imp_fit = summary(pool(after_imp_fit))
+  
+  #### Save coefficient estimates
+  fits = fits |> 
+    bind_rows(data.frame(cbind(model = j, design = "ETS (PC1*)", pool_imp_fit)))
+}
+```
+
+```{r}
+# Function to parse LaTex labels 
+parse.labels <- function(x) parse(text = x)
+library(latex2exp)
+fits |> 
+  dplyr::filter(grepl(pattern = "X[1-5]", x = term)) |> 
+  mutate(Model = factor(x = model, 
+                        levels = c(1, 2, 3, 4, 5), 
+                        labels = c(TeX("$Y_1 \\sim X_1 + \\bf{Z}$"), 
+                                   TeX("$Y_2 \\sim X_2 + \\bf{Z}$"),
+                                   TeX("$Y_3 \\sim X_3 + \\bf{Z}$"), 
+                                   TeX("$Y_4 \\sim X_4 + \\bf{Z}$"),
+                                   TeX("$Y_5 \\sim X_5 + \\bf{Z}$"))),
+         Design = factor(x = design, 
+                         levels = c("SRS", "ETS (X1*)", "ETS (PC1*)"), 
+                         labels = c("SRS", TeX("ETS-$X_1^*$"), TeX("ETS-$PC_1^*$"))))  |> 
+  ggplot(aes(x = Design, y = estimate, color = Design)) + 
+  geom_point() + 
+  geom_errorbar(aes(ymin = estimate - 1.96 * std.error, ymax = estimate + 1.96 * std.error)) + 
+  theme_minimal(base_size = 14) + 
+  ggthemes::scale_color_colorblind(guide = "none") + 
+  facet_wrap(~Model,
+             scales = "free", 
+             labeller = labeller(Model = label_parsed)) + 
+  xlab(TeX("Validation Study Design", bold = TRUE)) + 
+  ylab(TeX("Coefficient Estimate on $X_j$", bold = TRUE)) + 
+  scale_x_discrete(labels = parse.labels) + 
+  theme(strip.background = element_rect(fill = "black"), 
+        strip.text = element_text(color = "white"), 
+        legend.title = element_text(face = "bold"), 
+        legend.position = "top")
+```
+```{r, echo = FALSE}
+## Save it 
+if(grepl(pattern = "lotspes", x = getwd())) {
+ ggsave(filename = "~/Documents/ETS_PCA/Plots/NHANES_Analysis.pdf", 
+       device = "pdf", 
+       width = 10, 
+       height = 5) 
+}
+```
+
+```{r}
+fits |> 
+  dplyr::filter(grepl(pattern = "X[1-5]", x = term)) |> 
+  mutate(Model = factor(x = model, 
+                        levels = c(1, 2, 3, 4, 5), 
+                        labels = c(TeX("$Y_1 \\sim X_1 + \\bf{Z}$"), 
+                                   TeX("$Y_2 \\sim X_2 + \\bf{Z}$"),
+                                   TeX("$Y_3 \\sim X_3 + \\bf{Z}$"), 
+                                   TeX("$Y_4 \\sim X_4 + \\bf{Z}$"),
+                                   TeX("$Y_5 \\sim X_5 + \\bf{Z}$"))),
+         Design = factor(x = design, 
+                         levels = c("SRS", "ETS (X1*)", "ETS (PC1*)"), 
+                         labels = c("SRS", TeX("ETS-$X_1^*$"), TeX("ETS-$PC_1^*$"))))  |> 
+  dplyr::mutate(lb = estimate - 1.96 * std.error, 
+                ub = estimate + 1.96 * std.error, 
+                ci_width = ub - lb) |> 
+  dplyr::select(Model, Design, ci_width) |> 
+  ggplot(aes(x = Model, y = ci_width, fill = Design)) + 
+  geom_bar(stat = "identity", position = position_dodge(width = 1)) + 
+  theme_minimal(base_size = 14) + 
+  ggthemes::scale_fill_colorblind(labels = parse.labels) + 
+  scale_x_discrete(labels = parse.labels) + 
+  xlab(TeX("Model", bold = TRUE)) + 
+  ylab(TeX("Width of the 95% Confidence Interval for $\\beta_j$", bold = TRUE)) + 
+  theme(strip.background = element_rect(fill = "black"), 
+        strip.text = element_text(color = "white"), 
+        legend.title = element_text(face = "bold"), 
+        legend.position = "top")
+```
+
+```{r}
+fits = fits |> 
+  dplyr::filter(grepl(pattern = "X[1-5]", x = term)) |> 
+  mutate(Model = factor(x = model, 
+                        levels = c(1, 2, 3, 4, 5), 
+                        labels = c(TeX("$Y_1 \\sim X_1 + \\bf{Z}$"), 
+                                   TeX("$Y_2 \\sim X_2 + \\bf{Z}$"),
+                                   TeX("$Y_3 \\sim X_3 + \\bf{Z}$"), 
+                                   TeX("$Y_4 \\sim X_4 + \\bf{Z}$"),
+                                   TeX("$Y_5 \\sim X_5 + \\bf{Z}$"))),
+         Design = factor(x = design, 
+                         levels = c("SRS", "ETS (X1*)", "ETS (PC1*)"), 
+                         labels = c("SRS", TeX("ETS-$X_1^*$"), TeX("ETS-$PC_1^*$"))))  |> 
+  dplyr::mutate(lb = estimate - 1.96 * std.error, 
+                ub = estimate + 1.96 * std.error, 
+                ci_width = ub - lb)
+fits |> 
+  dplyr::left_join(
+    fits |> 
+      dplyr::filter(design == "SRS") |> 
+      dplyr::select(model, ci_width) |> 
+      dplyr::rename(srs_ci_width = ci_width)
+  ) |> 
+  dplyr::mutate(width_ratio = ci_width / srs_ci_width) |> 
+  ggplot(aes(x = Model, y = width_ratio, fill = Design)) + 
+  geom_bar(stat = "identity", position = position_dodge(width = 1)) + 
+  theme_minimal(base_size = 14) + 
+  ggthemes::scale_fill_colorblind(labels = parse.labels) + 
+  scale_x_discrete(labels = parse.labels) + 
+  xlab(TeX("Model", bold = TRUE)) + 
+  ylab(TeX("Width of the 95% Confidence Interval for $\\beta_j$", bold = TRUE)) + 
+  theme(strip.background = element_rect(fill = "black"), 
+        strip.text = element_text(color = "white"), 
+        legend.title = element_text(face = "bold"), 
+        legend.position = "top")
+```
+
+```{r}
+## Create the plot 
+fits |> 
+  dplyr::filter(grepl(pattern = "X[1-5]", x = term)) |> 
+  mutate(Model = factor(x = model, 
+                        levels = c(1, 2, 3, 4, 5), 
+                        labels = c(TeX("$Y_1 \\sim X_1 + \\bf{Z}$"), 
+                                   TeX("$Y_2 \\sim X_2 + \\bf{Z}$"),
+                                   TeX("$Y_3 \\sim X_3 + \\bf{Z}$"), 
+                                   TeX("$Y_4 \\sim X_4 + \\bf{Z}$"),
+                                   TeX("$Y_5 \\sim X_5 + \\bf{Z}$"))),
+         Design = factor(x = design, 
+                         levels = c("SRS", "ETS (X1*)", "ETS (PC1*)"), 
+                         labels = c("SRS", TeX("ETS-$X_1^*$"), TeX("ETS-$PC_1^*$"))))  |> 
+  dplyr::mutate(lb = estimate - 1.96 * std.error, 
+                ub = estimate + 1.96 * std.error, 
+                ci_width = ub - lb) |> 
+  dplyr::select(Model, Design, ci_width) |> 
+  dplyr::group_by(Model) |> 
+  dplyr::mutate(minWidth = min(ci_width), 
+                maxWidth = max(ci_width)) |> 
+  ggplot(aes(x = Model, 
+             y = ci_width, 
+             color = Design)) + 
+  geom_segment(aes(x = Model, y = minWidth,
+                   xend = Model, yend = maxWidth),
+               color = "#aeb6bf",
+               linewidth = 4.5, 
+               alpha = 0.5) +
+  geom_point(size = 4) + 
+  facet_grid(cols = vars(Model),
+             scales = "free") +
+  theme_minimal(base_size = 14) + 
+  ggthemes::scale_color_colorblind(labels = parse.labels) + 
+  xlab(TeX("Model of $Y_j \\sim X_j$", bold = TRUE)) + 
+  ylab(TeX("Empirical Efficiency of Coefficient Estimate on $X_j$ (Log-Transformed)", bold = TRUE)) + 
+  scale_x_discrete(labels = parse.labels) + 
+  theme(strip.background = element_rect(fill = "black"), 
+        strip.text = element_text(color = "white"), 
+        legend.title = element_text(face = "bold"), 
+        legend.position = "top", 
+        panel.spacing = unit(1, "lines")) + 
+  coord_flip() 
+```
