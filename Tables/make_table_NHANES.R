@@ -21,7 +21,6 @@ fits |>
   dplyr::select(-model) |>
   kable(format = "latex", booktabs = TRUE, escape = FALSE, align = "lcccccccccccc") |> 
   kable_styling() |> 
-  add_header_above(header = c(" " = 5, "Race and Ethnicity" = 4, "Education Level" = 4), bold = TRUE) |> 
   row_spec(row = 0, bold = TRUE) |>
   group_rows(group_label = "Model 1", start_row = 1, end_row = 12, italic = TRUE, bold = FALSE) |> 
   group_rows(group_label = "Model 2", start_row = 13, end_row = 24, italic = TRUE, bold = FALSE) |>

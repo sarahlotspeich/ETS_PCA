@@ -13,7 +13,8 @@ library(tidyr) ## for data pivoting
 library(mice) ## for imputation
 library(ggplot2) ## for pretty plots
 library(latex2exp) ## for LaTex in plots
-library(corrplot) ## to plot correlation matrix
+library(corrplot) ## for correlation plot
+library(kableExtra) ## for pretty LaTex tables
 
 # Load packages (can be installed from GitHub)
 ## Run once: devtools::install_github("sarahlotspeich/auditDesignR")
@@ -117,9 +118,13 @@ can be found in this repository as
 
 ## Descriptive Statistics
 
-### Error-Prone Versus Error-Free Exposures
+### Distributions of Error-Prone Exposures
 
 <img src="README_files/figure-gfm/unnamed-chunk-3-1.png" alt=""  />
+
+### Error-Prone Versus Error-Free Exposures
+
+<img src="README_files/figure-gfm/unnamed-chunk-4-1.png" alt=""  />
 
 ### Correlation Matrix Between Error-Prone Exposures
 
@@ -167,11 +172,11 @@ nhanes_data$pc1 = pc$scores[, 1]
 
 ### Scree Plot
 
-<img src="README_files/figure-gfm/unnamed-chunk-5-1.png" alt=""  />
+<img src="README_files/figure-gfm/unnamed-chunk-6-1.png" alt=""  />
 
 ### Loadings Plot
 
-<img src="README_files/figure-gfm/unnamed-chunk-6-1.png" alt=""  />
+<img src="README_files/figure-gfm/unnamed-chunk-7-1.png" alt=""  />
 
 ## Fitting the Models Under Different Partial Validation Designs
 
@@ -337,6 +342,15 @@ for (j in 1:5) {
 
 ## Results
 
-<img src="README_files/figure-gfm/unnamed-chunk-10-1.png" alt=""  />
+<img src="README_files/figure-gfm/unnamed-chunk-11-1.png" alt=""  />
 
-<img src="README_files/figure-gfm/unnamed-chunk-12-1.png" alt=""  />
+<img src="README_files/figure-gfm/unnamed-chunk-13-1.png" alt=""  />
+
+### Total Coefficient Variability
+
+    ## # A tibble: 3 × 2
+    ##   design     sum_var
+    ##   <chr>        <dbl>
+    ## 1 ETS (PC1*) 0.00464
+    ## 2 ETS (X1*)  0.00557
+    ## 3 SRS        0.00539
