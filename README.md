@@ -220,6 +220,65 @@ set.seed(918)
 fits = data.frame()
 ```
 
+Before fitting models, the five exposures were re-scaled to be in
+$10$-unit increments, rather than $1$.
+
+``` r
+## Rescale all error-prone and error-free exposures 
+nhanes_data = nhanes_data |> 
+  ### Some get rescaled into 100-unit increments (those with larger max)
+  mutate(across(.cols = c(XSTAR1:XSTAR2, XSTAR5, X1:X2, X5), .fns = function(x) x / 100)) |> 
+  ### And the rest into 10-unit increments 
+  mutate(across(.cols = c(XSTAR3:XSTAR4, X3:X4), .fns = function(x) x / 100)) 
+
+## View new summary 
+nhanes_data |> 
+  summary()
+```
+
+    ##       SEQN              Y1               Y2               Y3        
+    ##  Min.   :130378   Min.   : 10.60   Min.   : 35.00   Min.   : 23.00  
+    ##  1st Qu.:133342   1st Qu.: 57.30   1st Qu.: 61.00   1st Qu.: 45.00  
+    ##  Median :136394   Median : 78.75   Median : 69.00   Median : 53.00  
+    ##  Mean   :136368   Mean   : 83.63   Mean   : 69.75   Mean   : 55.37  
+    ##  3rd Qu.:139336   3rd Qu.:104.00   3rd Qu.: 77.00   3rd Qu.: 64.00  
+    ##  Max.   :142309   Max.   :290.00   Max.   :129.00   Max.   :159.00  
+    ##        Y4               Y5             XSTAR1           XSTAR2      
+    ##  Min.   :  0.35   Min.   : 121.0   Min.   : 0.000   Min.   : 0.000  
+    ##  1st Qu.:  5.89   1st Qu.: 387.8   1st Qu.: 5.180   1st Qu.: 0.330  
+    ##  Median :  9.25   Median : 494.0   Median : 7.690   Median : 1.200  
+    ##  Mean   : 13.77   Mean   : 551.4   Mean   : 8.857   Mean   : 1.562  
+    ##  3rd Qu.: 15.39   3rd Qu.: 667.0   3rd Qu.:11.280   3rd Qu.: 2.100  
+    ##  Max.   :526.30   Max.   :2440.0   Max.   :92.660   Max.   :19.200  
+    ##      XSTAR3           XSTAR4            XSTAR5         RIAGENDR   
+    ##  Min.   :0.0000   Min.   :0.00000   Min.   : 0.000   Male  :1063  
+    ##  1st Qu.:0.1548   1st Qu.:0.00000   1st Qu.: 1.240   Female:1325  
+    ##  Median :0.2358   Median :0.00000   Median : 1.840                
+    ##  Mean   :0.2662   Mean   :0.07717   Mean   : 2.139                
+    ##  3rd Qu.:0.3393   3rd Qu.:0.00000   3rd Qu.: 2.670                
+    ##  Max.   :2.0884   Max.   :4.48100   Max.   :20.640                
+    ##     RIDAGEYR                                    RIDRETH1   
+    ##  Min.   :20.00   Non-Hispanic White                 :1504  
+    ##  1st Qu.:42.00   Mexican American                   : 165  
+    ##  Median :60.00   Other Hispanic                     : 243  
+    ##  Mean   :55.48   Non-Hispanic Black                 : 243  
+    ##  3rd Qu.:68.00   Other Race (Including Multi-Racial): 233  
+    ##  Max.   :80.00                                             
+    ##                                DMDEDUC2         X1               X2         
+    ##  College Graduate or Above         :975   Min.   :-5.991   Min.   :-2.6578  
+    ##  < 9th Grade                       : 95   1st Qu.: 4.620   1st Qu.: 0.3432  
+    ##  9-11th Grade                      :148   Median : 7.874   Median : 1.2412  
+    ##  High School Grad/GED or Equivalent:476   Mean   : 8.738   Mean   : 1.5415  
+    ##  Some College or AA Degree         :694   3rd Qu.:11.990   3rd Qu.: 2.2998  
+    ##                                           Max.   :94.708   Max.   :18.5978  
+    ##        X3                X4                 X5              pc1         
+    ##  Min.   :-0.2994   Min.   :-0.34735   Min.   :-1.869   Min.   :-2.8554  
+    ##  1st Qu.: 0.1398   1st Qu.:-0.05481   1st Qu.: 1.109   1st Qu.:-0.9252  
+    ##  Median : 0.2464   Median : 0.03382   Median : 1.926   Median :-0.2130  
+    ##  Mean   : 0.2684   Mean   : 0.07371   Mean   : 2.138   Mean   : 0.0000  
+    ##  3rd Qu.: 0.3618   3rd Qu.: 0.13525   3rd Qu.: 2.871   3rd Qu.: 0.6031  
+    ##  Max.   : 2.0391   Max.   : 4.43686   Max.   :19.887   Max.   :11.7094
+
 ### Full Validation (Gold Standard)
 
 A key advantage to simulating the validation data $\pmb{X}$ is that we
@@ -560,16 +619,16 @@ run_etsPCstar1_analysis = function(data, val_size = 250, num_imp = 75) {
 
 ## Results
 
-<img src="README_files/figure-gfm/unnamed-chunk-16-1.png" alt=""  />
-
 <img src="README_files/figure-gfm/unnamed-chunk-17-1.png" alt=""  />
+
+<img src="README_files/figure-gfm/unnamed-chunk-18-1.png" alt=""  />
 
 ### Total Coefficient Variability
 
     ## # A tibble: 4 × 2
     ##   design     sum_var
     ##   <chr>        <dbl>
-    ## 1 ETS (PC1*) 0.00464
-    ## 2 ETS (X1*)  0.00557
-    ## 3 GS         0.00151
-    ## 4 SRS        0.00539
+    ## 1 ETS (PC1*)    46.4
+    ## 2 ETS (X1*)     55.7
+    ## 3 GS            15.1
+    ## 4 SRS           53.9
