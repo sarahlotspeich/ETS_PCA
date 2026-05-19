@@ -14,7 +14,6 @@ library(mice) ## for imputation
 library(ggplot2) ## for pretty plots
 library(latex2exp) ## for LaTex in plots
 library(corrplot) ## for correlation plot
-library(kableExtra) ## for pretty LaTex tables
 
 # Load packages (can be installed from GitHub)
 ## Run once: devtools::install_github("sarahlotspeich/auditDesignR")
@@ -84,28 +83,33 @@ testing (e.g., of blood or urine samples).
 # //////////////////////////////////////////////////////////////////////////////
 # Simulate error-free continuous exposures Xj|Xj* //////////////////////////////
 # //////////////////////////////////////////////////////////////////////////////
-### For reproducibility 
+## For reproducibility 
 set.seed(918) 
-### Simulate random errors (with variance relative to the variance of X*s)
+
+## Calculate Var(X1*), ..., Var(X5*) in NHANES 
 varXSTARs = as.numeric(
-  apply(X = nhanes_data[, c("XSTAR1", "XSTAR2", "XSTAR3", "XSTAR4", "XSTAR5")], ### calculate Var(X1), ..., Var(X5)
+  apply(X = nhanes_data[, c("XSTAR1", "XSTAR2", "XSTAR3", "XSTAR4", "XSTAR5")], 
         MARGIN = 2, 
         FUN = var)
   )
+varU = varXSTARs / 4
+
+## Simulate random errors (with variance relative to the variance of X*s)
 U = MASS::mvrnorm(n = nrow(nhanes_data), 
                   mu = rep(0, 5), ### mean vector
                   Sigma = diag( ### variance-covariance matrix
-                    varXSTARs / 4, ### assuming uncorrelated errors with Var(Uj) = Var(X*j) / 4
+                    varU, ### assuming uncorrelated errors with Var(Uj) = Var(X*j) / 4
                     nrow = 5)
                   ) 
-### Subtract random errors from error-prone exposures (NHANES) to create simulated error-free exposures 
-#### Classical additive measurement error model: X* = X + U --> X = X* - U 
+
+## Subtract random errors from error-prone exposures (NHANES) to create simulated error-free exposures
+### Classical additive measurement error model: X* = X + U --> X = X* - U 
 X = nhanes_data[, paste0("XSTAR", 1:5)] - U 
 colnames(X) = paste0("X", 1:5)
 nhanes_data = nhanes_data |> 
   bind_cols(X)
 
-### Check sample size (subset to complete cases on Y, X*, Z)
+## Check sample size (subset to complete cases on Y, X*, Z)
 nhanes_data |> 
   nrow()
 ```
@@ -116,21 +120,40 @@ nhanes_data |>
 can be found in this repository as
 [`analysis_data_with_errors.csv`](NHANES-Analysis/analysis_data_with_errors.csv).
 
-## Descriptive Statistics
+``` r
+# Write a helper function (for later) 
+simulate_error_free = function() {
+  ## Simulate random errors (with variance relative to the variance of X*s)
+  U = MASS::mvrnorm(n = nrow(nhanes_data), 
+                    mu = rep(0, 5), ### mean vector
+                    Sigma = diag( ### variance-covariance matrix
+                      varXSTARs / 4, ### assuming uncorrelated errors with Var(Uj) = Var(X*j) / 4
+                      nrow = 5)
+                    ) 
+  
+  ## Subtract random errors from error-prone exposures (NHANES) to create simulated error-free exposures
+  ### Classical additive measurement error model: X* = X + U --> X = X* - U 
+  X = nhanes_data[, paste0("XSTAR", 1:5)] - U 
+  colnames(X) = paste0("X", 1:5)
+  
+  ## Return simulated X1,...X5 
+  return(X)
+}
+```
 
-### Distributions of Error-Prone Exposures
+## Descriptive Statistics and Principal Components Analysis
 
-<img src="README_files/figure-gfm/unnamed-chunk-3-1.png" alt=""  />
+### Error-Prone Exposures
 
-### Error-Prone Versus Error-Free Exposures
+#### Versus Error-Free Exposures
 
-<img src="README_files/figure-gfm/unnamed-chunk-4-1.png" alt=""  />
+<img src="README_files/figure-gfm/unnamed-chunk-5-1.png" alt=""  />
 
-### Correlation Matrix Between Error-Prone Exposures
+#### Correlation Matrix
 
 <img src="README_files/figure-gfm/corrplot X*-1.png" alt=""  />
 
-### Principal Components Analysis of Error-Prone Exposures
+#### Principal Components Analysis of Error-Prone Exposures
 
 ``` r
 ## Inspect numeric summaries X* variables (different scales/variability)
@@ -170,13 +193,13 @@ summary(pc)
 nhanes_data$pc1 = pc$scores[, 1] 
 ```
 
-### Scree Plot
-
-<img src="README_files/figure-gfm/unnamed-chunk-6-1.png" alt=""  />
-
-### Loadings Plot
+##### Scree Plot
 
 <img src="README_files/figure-gfm/unnamed-chunk-7-1.png" alt=""  />
+
+##### Loadings Plot
+
+<img src="README_files/figure-gfm/unnamed-chunk-8-1.png" alt=""  />
 
 ## Fitting the Models Under Different Partial Validation Designs
 
@@ -242,6 +265,57 @@ for (j in 1:5) {
 }
 ```
 
+``` r
+# Write a helper function (for later) 
+run_srs_analysis = function(data, val_size = 250, num_imp = 75) {
+  ## Initialize empty dataframe to hold estimates from the 5 models
+  fits = data.frame()
+  
+  ## Simple random sampling 
+  V_srs = sample_srs(phI = nrow(data), ### Phase I sample size
+                     phII = val_size) ### Phase II (validation study) sample size)
+  
+  ## Create analytical dataset, incorporating validation indicators and making unvalidated patients' exposures missing
+  des_srs = data |> 
+    bind_cols(data.frame(V = V_srs)) |> 
+    mutate(X1 = ifelse(test = V == 1, yes = X1, no = NA), 
+           X2 = ifelse(test = V == 1, yes = X2, no = NA), 
+           X3 = ifelse(test = V == 1, yes = X3, no = NA), 
+           X4 = ifelse(test = V == 1, yes = X4, no = NA), 
+           X5 = ifelse(test = V == 1, yes = X5, no = NA))
+  
+  ## Loop over j = 1, ..., 5 to impute and fit each model
+  for (j in 1:5) {
+    ### Imputation model depends on the validation study design and number of imputations
+    ### Which variables go into the imputation model 
+    imp_mod_vars = c(paste0("X", j), paste0("XSTAR", j), Z) #### All include Xj, Xj*, Z
+    imp_mod_vars = c(imp_mod_vars, paste0("Y", j)) #### Multiple imputation adds Yj 
+    
+    ### Impute and fit model 
+    #### Multiple imputation
+    mice_dat = mice(m = num_imp,
+                    data = des_srs[, imp_mod_vars], 
+                    method = "norm",
+                    printFlag = FALSE)
+    
+    #### Fit analysis model to the imputed data (separately) 
+    after_imp_fit = with(data = mice_dat, 
+                         expr = glm(formula = as.formula(paste0("Y", j, "~", "X", j, "+", paste(Z, collapse = "+"))), 
+                                    family = "gaussian"))
+    
+    #### Pool the analysis models from each imputation
+    pool_imp_fit = summary(pool(after_imp_fit)) |> 
+      dplyr::select(-df)
+    
+    ### Save coefficient estimates
+    fits = fits |> 
+      bind_rows(data.frame(cbind(model = j, design = "SRS", pool_imp_fit)))
+  }
+  ### Return all models' pooled coefficient estimates 
+  return(fits)
+}
+```
+
 ### Extreme Tail Sampling on $X_1^*$ (ETS-$X_1^*$)
 
 ``` r
@@ -286,6 +360,60 @@ for (j in 1:5) {
   ### Save coefficient estimates
   fits = fits |> 
     bind_rows(data.frame(cbind(model = j, design = "ETS (X1*)", pool_imp_fit)))
+}
+```
+
+``` r
+# Write a helper function (for later) 
+run_etsXstar1_analysis = function(data, val_size = 250, num_imp = 75) {
+  ## Initialize empty dataframe to hold estimates from the 5 models
+  fits = data.frame()
+  
+  ## ETS on X1*
+  V_etsXSTAR1 = sample_ets(ets_dat = data$XSTAR1, ### Sample on X1*
+                           phI = nrow(data), ### Phase I sample size
+                           phII = n) ### Phase II (validation study) sample size)
+  
+  ## Create analytical dataset, incorporating validation indicators and making unvalidated patients' exposures missing
+  des_etsXSTAR1 = data |> 
+    bind_cols(data.frame(V = V_etsXSTAR1)) |> 
+    mutate(X1 = ifelse(test = V == 1, yes = X1, no = NA), 
+           X2 = ifelse(test = V == 1, yes = X2, no = NA), 
+           X3 = ifelse(test = V == 1, yes = X3, no = NA), 
+           X4 = ifelse(test = V == 1, yes = X4, no = NA), 
+           X5 = ifelse(test = V == 1, yes = X5, no = NA))
+  
+  ## Loop over j = 1, ..., 5 to impute and fit each model
+  for (j in 1:5) {
+    ### Imputation model depends on the validation study design and number of imputations
+    ### Which variables go into the imputation model 
+    imp_mod_vars = c(paste0("X", j), paste0("XSTAR", j), Z) #### All include Xj, Xj*, Z
+    imp_mod_vars = unique(c(imp_mod_vars, "XSTAR1")) #### ETS-X1 adds X1* 
+    imp_mod_vars = c(imp_mod_vars, paste0("Y", j)) #### Multiple imputation adds Yj
+    
+    ### Impute and fit model 
+    #### Multiple imputation
+    mice_dat = mice(m = 75,
+                    data = des_etsXSTAR1[, imp_mod_vars], 
+                    method = "norm",
+                    printFlag = FALSE)
+    
+    #### Fit analysis model to the imputed data (separately) 
+    after_imp_fit = with(data = mice_dat, 
+                         expr = glm(formula = as.formula(paste0("Y", j, "~", "X", j, "+", paste(Z, collapse = "+"))), 
+                                    family = "gaussian"))
+    
+    #### Pool the analysis models from each imputation
+    pool_imp_fit = summary(pool(after_imp_fit)) |> 
+      dplyr::select(-df)
+    
+    ### Save coefficient estimates
+    fits = fits |> 
+      bind_rows(data.frame(cbind(model = j, design = "ETS (X1*)", pool_imp_fit)))
+  }
+  
+  ### Return all models' pooled coefficient estimates 
+  return(fits)
 }
 ```
 
@@ -340,11 +468,69 @@ for (j in 1:5) {
 }
 ```
 
+``` r
+# Write a helper function (for later) 
+run_etsPCstar1_analysis = function(data, val_size = 250, num_imp = 75) {
+  ## Initialize empty dataframe to hold estimates from the 5 models
+  fits = data.frame()
+  
+  ## ETS on PC1*
+  V_etsPCstar1 = sample_pca(pca_dat = data[, paste0("XSTAR", 1:5)], ## sample on first PC of X1*, ..., X5*
+                            phI = nrow(data), ## Phase I sample size
+                            phII = n) ## Phase II (validation study) sample size
+
+  ## Create analytical dataset, incorporating validation indicators and making unvalidated patients' exposures missing
+  des_etsPCstar1 = data |> 
+    bind_cols(data.frame(V = V_etsPCstar1)) |> 
+    mutate(X1 = ifelse(test = V == 1, yes = X1, no = NA), 
+           X2 = ifelse(test = V == 1, yes = X2, no = NA), 
+           X3 = ifelse(test = V == 1, yes = X3, no = NA), 
+           X4 = ifelse(test = V == 1, yes = X4, no = NA), 
+           X5 = ifelse(test = V == 1, yes = X5, no = NA))
+  
+  ## Since we sampled on PC1*, need to add it to the analytical dataset so 
+  ### we can include it in the imputation models 
+  des_etsPCstar1$pc1 = pc$scores[, 1] ### extract the first principal component
+  
+  ## Loop over j = 1, ..., 5 to impute and fit each model
+  for (j in 1:5) {
+    ### Imputation model depends on the validation study design and number of imputations
+    ### Which variables go into the imputation model 
+    imp_mod_vars = c(paste0("X", j), paste0("XSTAR", j), Z) #### All include Xj, Xj*, Z
+    imp_mod_vars = c(imp_mod_vars, "pc1") #### ETS-PCA adds pc 
+    imp_mod_vars = c(imp_mod_vars, paste0("Y", j)) #### Multiple imputation adds Yj
+    
+    ### Impute and fit model 
+    #### Multiple imputation
+    mice_dat = mice(m = 75,
+                    data = des_etsPCstar1[, imp_mod_vars], 
+                    method = "norm",
+                    printFlag = FALSE)
+    
+    #### Fit analysis model to the imputed data (separately) 
+    after_imp_fit = with(data = mice_dat, 
+                         expr = glm(formula = as.formula(paste0("Y", j, "~", "X", j, "+", paste(Z, collapse = "+"))), 
+                                    family = "gaussian"))
+    
+    #### Pool the analysis models from each imputation
+    pool_imp_fit = summary(pool(after_imp_fit)) |> 
+      dplyr::select(-df)
+    
+    ### Save coefficient estimates
+    fits = fits |> 
+      bind_rows(data.frame(cbind(model = j, design = "ETS (PC1*)", pool_imp_fit)))
+  }
+  
+  ### Return all models' pooled coefficient estimates 
+  return(fits)
+}
+```
+
 ## Results
 
-<img src="README_files/figure-gfm/unnamed-chunk-11-1.png" alt=""  />
+<img src="README_files/figure-gfm/unnamed-chunk-15-1.png" alt=""  />
 
-<img src="README_files/figure-gfm/unnamed-chunk-13-1.png" alt=""  />
+<img src="README_files/figure-gfm/unnamed-chunk-16-1.png" alt=""  />
 
 ### Total Coefficient Variability
 
@@ -354,3 +540,56 @@ for (j in 1:5) {
     ## 1 ETS (PC1*) 0.00464
     ## 2 ETS (X1*)  0.00557
     ## 3 SRS        0.00539
+
+## Monte Carlo Simulation
+
+We took the process outlined above – pulling NHANES data for
+$Y_1, \dots, Y_5$; $X_1^*, \dots, X_5^*$; and $\pmb{Z}$ and simulating
+$X_1, \dots, X_5$ – $1000$ times. Note that the only thing changing
+between these replications is the (simulated) error-free covariate
+values; since the ETS designs are based only on error-prone data, the
+same individuals are being sampled each time.
+
+``` r
+## Set number of simulations
+num_sims = 1000 
+
+## For reproducibility
+set.seed(918)
+
+## Initialize empty dataframe to hold estimates from the 5 models
+fits = data.frame()
+
+## Loop through the specified number of replications 
+for (s in 1:num_sims) {
+  ## Simulate X1,...,X5 
+  X = simulate_error_free()
+  
+  ## Replace previous X1,...,X5 with new 
+  nhanes_data[, paste0("X", 1:5)] = X
+  
+  ## SRS 
+  srs_fits = run_srs_analysis(data = nhanes_data)
+  
+  ## ETS-X1* 
+  etsXstar1_fits = run_etsXstar1_analysis(data = nhanes_data)
+  
+  ## ETS-PC1* 
+  etsPCstar1_fits = run_etsPCstar1_analysis(data = nhanes_data)
+  
+  ## Save them 
+  fits = fits |> 
+    bind_rows(srs_fits) |> 
+    bind_rows(etsXstar1_fits) |> 
+    bind_rows(etsPCstar1_fits)
+}
+
+## Save 
+fits |> 
+  write.csv("~/Documents/ETS_PCA/NHANES-Analysis/fits_monte_carlo.csv", 
+            row.names = FALSE)
+```
+
+## Results
+
+### Total Coefficient Variability
