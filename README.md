@@ -13,7 +13,7 @@ library(tidyr) ## for data pivoting
 library(mice) ## for imputation
 library(ggplot2) ## for pretty plots
 library(latex2exp) ## for LaTex in plots
-library(corrplot) ## for correlation plot
+library(ggcorrplot) ## for correlation plot
 
 # Load packages (can be installed from GitHub)
 ## Run once: devtools::install_github("sarahlotspeich/auditDesignR")
@@ -218,6 +218,38 @@ set.seed(918)
 
 ## Initialize empty dataframe to hold estimates from the 5 models
 fits = data.frame()
+```
+
+### Full Validation (Gold Standard)
+
+A key advantage to simulating the validation data $\pmb{X}$ is that we
+can actually compare each of the partially validated analyses to the
+“gold standard” (i.e., if all $N$ patients could be validated).
+
+``` r
+## Loop over j = 1, ..., 5 to impute and fit each model
+for (j in 1:5) {
+  ### Fit analysis model to the original (complete) data (separately) 
+  gs_fit = glm(formula = as.formula(paste0("Y", j, "~", "X", j, "+", paste(Z, collapse = "+"))), 
+               data = nhanes_data, 
+               family = "gaussian")
+  
+  ### Summary of analysis model
+  summ_gs_fit = coefficients(summary(gs_fit)) 
+  
+  ### Reformat summary to merge with MI models later
+  summ_gs_fit = summ_gs_fit |> 
+    data.frame() |> 
+    mutate(term = rownames(summ_gs_fit)) |> 
+    rename(estimate = Estimate, 
+           std.error = Std..Error, 
+           statistic = t.value, 
+           p.value = Pr...t..)
+  
+  ### Save coefficient estimates
+  fits = fits |> 
+    bind_rows(data.frame(cbind(model = j, design = "GS", summ_gs_fit)))
+}
 ```
 
 ### Simple Random Sampling (SRS)
@@ -528,68 +560,16 @@ run_etsPCstar1_analysis = function(data, val_size = 250, num_imp = 75) {
 
 ## Results
 
-<img src="README_files/figure-gfm/unnamed-chunk-15-1.png" alt=""  />
-
 <img src="README_files/figure-gfm/unnamed-chunk-16-1.png" alt=""  />
+
+<img src="README_files/figure-gfm/unnamed-chunk-17-1.png" alt=""  />
 
 ### Total Coefficient Variability
 
-    ## # A tibble: 3 × 2
+    ## # A tibble: 4 × 2
     ##   design     sum_var
     ##   <chr>        <dbl>
     ## 1 ETS (PC1*) 0.00464
     ## 2 ETS (X1*)  0.00557
-    ## 3 SRS        0.00539
-
-## Monte Carlo Simulation
-
-We took the process outlined above – pulling NHANES data for
-$Y_1, \dots, Y_5$; $X_1^*, \dots, X_5^*$; and $\pmb{Z}$ and simulating
-$X_1, \dots, X_5$ – $1000$ times. Note that the only thing changing
-between these replications is the (simulated) error-free covariate
-values; since the ETS designs are based only on error-prone data, the
-same individuals are being sampled each time.
-
-``` r
-## Set number of simulations
-num_sims = 1000 
-
-## For reproducibility
-set.seed(918)
-
-## Initialize empty dataframe to hold estimates from the 5 models
-fits = data.frame()
-
-## Loop through the specified number of replications 
-for (s in 1:num_sims) {
-  ## Simulate X1,...,X5 
-  X = simulate_error_free()
-  
-  ## Replace previous X1,...,X5 with new 
-  nhanes_data[, paste0("X", 1:5)] = X
-  
-  ## SRS 
-  srs_fits = run_srs_analysis(data = nhanes_data)
-  
-  ## ETS-X1* 
-  etsXstar1_fits = run_etsXstar1_analysis(data = nhanes_data)
-  
-  ## ETS-PC1* 
-  etsPCstar1_fits = run_etsPCstar1_analysis(data = nhanes_data)
-  
-  ## Save them 
-  fits = fits |> 
-    bind_rows(srs_fits) |> 
-    bind_rows(etsXstar1_fits) |> 
-    bind_rows(etsPCstar1_fits)
-}
-
-## Save 
-fits |> 
-  write.csv("~/Documents/ETS_PCA/NHANES-Analysis/fits_monte_carlo.csv", 
-            row.names = FALSE)
-```
-
-## Results
-
-### Total Coefficient Variability
+    ## 3 GS         0.00151
+    ## 4 SRS        0.00539
