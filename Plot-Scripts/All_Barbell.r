@@ -15,4 +15,4 @@ both = (covar_struct_barbell_plot /
 ggsave(filename = "~/Documents/ETS_PCA/Plots/All_Barbell.pdf", 
 	   device = "pdf", 
 	   width = 8, 
-	   height = 10)
+	   height = 9)

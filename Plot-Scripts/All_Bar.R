@@ -15,4 +15,4 @@ both = (covar_struct_bar_plot /
 ggsave(filename = "~/Documents/ETS_PCA/Plots/All_Bar.pdf", 
 	   device = "pdf", 
 	   width = 8, 
-	   height = 10)
+	   height = 8)
